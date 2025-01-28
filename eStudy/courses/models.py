@@ -27,7 +27,10 @@ class Video(models.Model):
 class UserVideoAccess(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     video = models.ForeignKey(Video, on_delete=models.CASCADE)
-    access_count = models.IntegerField(default=2)
+    access_count = models.PositiveIntegerField(default=2)
+
+    class Meta:
+        unique_together = ('user', 'video') 
 
     def __str__(self):
         return f"{self.user.username} - {self.video.title}"
