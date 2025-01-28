@@ -89,6 +89,8 @@ def register_view(request):
 
     return render(request, 'accounts/register.html', {'form': form})
 
+
+
 def login_view(request):
     if request.method == 'POST':
         form = UserLoginForm(request.POST)
@@ -115,13 +117,20 @@ def login_view(request):
 
             if user is not None:
                 login(request, user)
+                if user.is_superuser:
+                        return redirect('adminpanel_home')
                 return redirect('dashboard')
+                
         
         messages.error(request, 'Invalid credentials')
     else:
         form = UserLoginForm()
     
     return render(request, 'accounts/login.html', {'form': form})
+
+
+
+
 
 def logout_view(request):
     logout(request)
