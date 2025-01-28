@@ -1,0 +1,128 @@
+{% extends 'layouts/basee.html' %}  <!-- Extend your base.html -->
+
+{% block title %} Home Page {% endblock %}
+
+{% block stylesheets %}
+{{ block.super }}  <!-- Include parent styles if needed -->
+<style>
+    /* Hero Section */
+    .hero {
+        background: linear-gradient(135deg, #007bff, #00bfff);
+        color: white;
+        padding: 100px 20px;
+        text-align: center;
+    }
+
+    .hero h1 {
+        font-size: 48px;
+        margin-bottom: 20px;
+    }
+
+    .hero p {
+        font-size: 20px;
+        margin-bottom: 40px;
+    }
+
+    .hero .btn {
+        background-color: #28a745;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 5px;
+        font-size: 18px;
+        transition: background-color 0.3s ease;
+    }
+
+    .hero .btn:hover {
+        background-color: #218838;
+    }
+
+    /* Course Section */
+    .courses {
+        padding: 50px 20px;
+        text-align: center;
+    }
+
+    .courses h2 {
+        font-size: 36px;
+        margin-bottom: 40px;
+    }
+
+    .course-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .course-card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: transform 0.3s ease;
+    }
+
+    .course-card:hover {
+        transform: translateY(-10px);
+    }
+
+    .course-card img {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+    }
+
+    .course-card .info {
+        padding: 20px;
+    }
+
+    .course-card h3 {
+        font-size: 24px;
+        margin-bottom: 10px;
+    }
+
+    .course-card p {
+        font-size: 16px;
+        color: #666;
+    }
+
+    .course-card .btn {
+        display: inline-block;
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        margin-top: 15px;
+        transition: background-color 0.3s ease;
+    }
+
+    .course-card .btn:hover {
+        background-color: #0056b3;
+    }
+</style>
+{% endblock stylesheets %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero">
+    <h1>Welcome to E-Learning Platform</h1>
+    <p>Learn new skills, advance your career, and achieve your goals with our expert-led courses.</p>
+    <a href="{% url 'courses_page' %}" class="btn">Explore Courses</a>
+</div>
+
+<!-- Course Section -->
+<div class="courses" id="courses">
+    <h2>Featured Courses</h2>
+    <div class="course-grid">
+        {% for course in courses %}
+        <div class="course-card">
+            <img src="https://via.placeholder.com/300x180" alt="{{ course.title }}">
+            <div class="info">
+                <h3>{{ course.title }}</h3>
+                <p>{{ course.description }}</p>
+                <a href="{% url 'course_videos' course.id %}" class="btn">View Course</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

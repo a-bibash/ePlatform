@@ -1,0 +1,40 @@
+# Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.so
+
+# Django stuff:
+*.log
+*.pot
+*.pyc
+*.db
+*.sqlite3
+
+# Media files
+/media/
+
+# Static files (if they are generated during build or deployment)
+/static/
+
+# Local settings (sensitive information)
+local_settings.py
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*.bak
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Test/coverage reports
+.coverage
+*.cover
+nosetests.xml
+coverage.xml
+*.coveragerc
