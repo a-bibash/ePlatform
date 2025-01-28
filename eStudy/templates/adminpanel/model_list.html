@@ -1,0 +1,25 @@
+{% extends 'layouts/ad_base.html' %}
+
+{% block content %}
+<h1>{{ model_name }} List</h1>
+<a href="{% url 'model_create' app_label=app_label model_name=model_name %}" class="btn btn-primary mb-3">Create {{ model_name }}</a>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Details</th> 
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for obj in objects %}
+        <tr>
+            <td>{{ obj }}</td>
+            <td>
+                <a href="{% url 'model_update' app_label=app_label model_name=model_name pk=obj.pk %}" class="btn btn-sm btn-warning">Edit</a>
+                <a href="{% url 'model_delete' app_label=app_label model_name=model_name pk=obj.pk %}" class="btn btn-sm btn-danger">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
