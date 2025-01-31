@@ -1,5 +1,12 @@
 {% extends 'layouts/ad_base.html' %}
 
+{% load static %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="{% static 'css/ad_css.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% endblock %}
+
 {% block content %}
 <h1>{{ model_name }} List</h1>
 <a href="{% url 'model_create' app_label=app_label model_name=model_name %}" class="btn btn-primary mb-3">Create {{ model_name }}</a>

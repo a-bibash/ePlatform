@@ -71,6 +71,60 @@
         border-radius: 5px;
         margin-bottom: 20px;
     }
+
+    /* Custom Video Player Styles */
+    .custom-video-player {
+        position: relative;
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .custom-video-player video {
+        width: 100%;
+        border-radius: 10px;
+    }
+
+    .controls {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+    }
+
+    .controls button {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    .controls button:hover {
+        color: #007bff;
+    }
+
+    .progress-bar {
+        flex-grow: 1;
+        height: 5px;
+        background-color: #444;
+        margin: 0 10px;
+        position: relative;
+        cursor: pointer;
+    }
+
+    .progress-bar .progress {
+        height: 100%;
+        background-color: #007bff;
+        width: 0;
+    }
 </style>
 {% endblock stylesheets %}
 
@@ -97,11 +151,20 @@
         <!-- Check if the user has access to the video -->
         {% if access.access_count > 0 %}
         <div class="video-container">
-            <!-- Video Player -->
-            <video controls>
-                <source src="{{ video.video_file.url }}" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
+            <!-- Custom Video Player -->
+            <div class="custom-video-player">
+                <video id="videoPlayer" controlsList="nodownload">
+                    <source src="{{ video.video_file.url }}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <div class="controls">
+                    <button id="playPauseBtn">▶️</button>
+                    <div class="progress-bar" id="progressBar">
+                        <div class="progress" id="progress"></div>
+                    </div>
+                    <button id="fullscreenBtn">⛶</button>
+                </div>
+            </div>
 
             <!-- Video Details -->
             <div class="video-details">
@@ -122,23 +185,59 @@
     </div>
 </div>
 
-
 <script>
-    document.addEventListener('keydown', function(event) {
-        if (event.ctrlKey && (event.keyCode === 83 || event.keyCode === 85 || event.keyCode === 67)) {
-            event.preventDefault();
+    // Custom Video Player Script
+    const videoPlayer = document.getElementById('videoPlayer');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const progressBar = document.getElementById('progressBar');
+    const progress = document.getElementById('progress');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+    // Play/Pause Button
+    playPauseBtn.addEventListener('click', () => {
+        if (videoPlayer.paused) {
+            videoPlayer.play();
+            playPauseBtn.textContent = '⏸️';
+        } else {
+            videoPlayer.pause();
+            playPauseBtn.textContent = '▶️';
         }
     });
 
-    document.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
+    // Update Progress Bar
+    videoPlayer.addEventListener('timeupdate', () => {
+        const percent = (videoPlayer.currentTime / videoPlayer.duration) * 100;
+        progress.style.width = `${percent}%`;
     });
 
-    document.addEventListener('keydown', function(e) {
+    // Seek on Progress Bar Click
+    progressBar.addEventListener('click', (e) => {
+        const clickTime = (e.offsetX / progressBar.offsetWidth) * videoPlayer.duration;
+        videoPlayer.currentTime = clickTime;
+    });
+
+    // Fullscreen Button
+    fullscreenBtn.addEventListener('click', () => {
+        if (videoPlayer.requestFullscreen) {
+            videoPlayer.requestFullscreen();
+        } else if (videoPlayer.mozRequestFullScreen) { // Firefox
+            videoPlayer.mozRequestFullScreen();
+        } else if (videoPlayer.webkitRequestFullscreen) { // Chrome, Safari, Opera
+            videoPlayer.webkitRequestFullscreen();
+        } else if (videoPlayer.msRequestFullscreen) { // IE/Edge
+            videoPlayer.msRequestFullscreen();
+        }
+    });
+
+    // Disable Right-Click and Keyboard Shortcuts
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && (e.keyCode === 83 || e.keyCode === 85 || e.keyCode === 67)) {
+            e.preventDefault();
+        }
         if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73) || (e.ctrlKey && e.shiftKey && e.keyCode === 74)) {
             e.preventDefault();
         }
     });
 </script>
 {% endblock %}
-

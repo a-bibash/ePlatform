@@ -1,7 +1,14 @@
 {% extends 'layouts/ad_base.html' %}
 
+{% load static %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="{% static 'css/ad_css.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% endblock %}
+
 {% block content %}
-<h1>Admin Panel Dashboard</h1>
+<h1 class="text-center mb-4">Admin Panel Dashboard</h1>
 <div class="row">
     <div class="col-md-12">
         <div class="card">
@@ -12,10 +19,12 @@
                 <div class="list-group">
                     {% for model in models %}
                     {% if model.name|lower == 'user' %}
-                        <a class="list-group-item list-group-item-action" href="{% url 'user_list' %}">Users</a>
+                        <a class="list-group-item list-group-item-action" href="{% url 'user_list' %}">
+                            <i class="fas fa-users"></i> Users
+                        </a>
                     {% else %}
                         <a href="{% url 'model_list' app_label=model.app_label model_name=model.name|lower %}" class="list-group-item list-group-item-action">
-                            {{ model.verbose_name|title }}
+                            <i class="fas fa-table"></i> {{ model.verbose_name|title }}
                         </a>
                     {% endif %}
                     {% endfor %}
@@ -24,4 +33,9 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Example: Include custom JS if needed -->
+<script src="{% static 'js/ad_js.js' %}"></script>
 {% endblock %}

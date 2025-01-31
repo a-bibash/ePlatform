@@ -241,6 +241,42 @@
                 e.preventDefault();
             }
         });
+
+
+        // Function to detect if DevTools is open
+        function detectDevTools() {
+            const devToolsOpened = () => {
+                const widthThreshold = window.outerWidth - window.innerWidth > 160;
+                const heightThreshold = window.outerHeight - window.innerHeight > 160;
+                return widthThreshold || heightThreshold;
+            };
+    
+            if (devToolsOpened()) {
+                console.warn("Developer Tools is open.");
+                alert("Warning: Developer Tools is open. Please close it to continue.");
+                // You can also redirect the user or disable certain features
+            }
+        }
+    
+        // Check DevTools status periodically
+        setInterval(detectDevTools, 1000);
+    
+        // Existing security scripts
+        document.addEventListener('keydown', function(event) {
+            if (event.ctrlKey && (event.keyCode === 83 || event.keyCode === 85 || event.keyCode === 67)) {
+                event.preventDefault();
+            }
+        });
+    
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+    
+        document.addEventListener('keydown', function(e) {
+            if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73) || (e.ctrlKey && e.shiftKey && e.keyCode === 74)) {
+                e.preventDefault();
+            }
+        });
     </script>
     
     {% endblock javascripts %}
