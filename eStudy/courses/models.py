@@ -17,7 +17,7 @@ class Course(models.Model):
 class Video(models.Model):
     course = models.ForeignKey(Course, related_name='videos', on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
-    video_file = models.FileField(upload_to='videos/')
+    s3_file_key = models.CharField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
