@@ -30,6 +30,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .models import Video, UserVideoAccess
+from .utils import *
 
 @login_required
 def stream_video(request, video_id):
@@ -49,11 +50,14 @@ def stream_video(request, video_id):
     # Decrement the access count only after the video is successfully loaded
     access.access_count -= 1
     access.save()
-    
+
+    video = Video.objects.get(id=video_id)
+    presigned_url = generate_presigned_url('study-material', video.s3_file_key)
     # Render the template with the video and access context
     context = {
         'video': video,
         'access': access,
+        'presigned_url': presigned_url,
     }
     
     return render(request, 'courses/stream_video.html', context)

@@ -154,7 +154,8 @@
             <!-- Custom Video Player -->
             <div class="custom-video-player">
                 <video id="videoPlayer" controlsList="nodownload">
-                    <source src="{{ video.video_file.url }}" type="video/mp4">
+                    <!-- Dynamically generate the S3 file URL -->
+                    <source src="{{ presigned_url }}" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
                 <div class="controls">
