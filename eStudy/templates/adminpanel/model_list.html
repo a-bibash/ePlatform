@@ -9,7 +9,7 @@
 
 {% block content %}
 <h1>{{ model_name }} List</h1>
-<a href="{% url 'model_create' app_label=app_label model_name=model_name %}" class="btn btn-primary mb-3">Create {{ model_name }}</a>
+<a href="{% url 'model_create' app_label=app_label model_name=model_name %}" class="btn btn-primary mb-3">Add {{ model_name }}</a>
 <table class="table table-bordered">
     <thead>
         <tr>

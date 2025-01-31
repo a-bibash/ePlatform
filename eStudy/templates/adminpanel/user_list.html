@@ -9,7 +9,7 @@
 
 {% block content %}
 <h1>User List</h1>
-<a href="{% url 'user_create' %}" class="btn btn-primary mb-3">Create User</a>
+<a href="{% url 'user_create' %}" class="btn btn-primary mb-3">Add User</a>
 <table class="table table-bordered">
     <thead>
         <tr>
@@ -25,7 +25,7 @@
             <td>{{ user.email }}</td>
             <td>
                 <a href="{% url 'user_update' user.pk %}" class="btn btn-sm btn-warning">Edit</a>
-                <a href="{% url 'user_delete' user.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                <a href="{% url 'user_delete' user.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete user?')">Delete</a>
             </td>
         </tr>
         {% endfor %}
