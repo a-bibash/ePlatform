@@ -26,41 +26,97 @@ def course_videos(request, course_id):
 
 
 
-from django.shortcuts import get_object_or_404, redirect
+
+from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import Http404, JsonResponse
 from .models import Video, UserVideoAccess
-from .utils import *
+from .utils import generate_presigned_url
 
 @login_required
 def stream_video(request, video_id):
+    # Fetch the video object, or raise a 404 if it doesn't exist
     video = get_object_or_404(Video, id=video_id)
     
     # Track video views
-    access, created = UserVideoAccess.objects.get_or_create(
-        user=request.user, 
-        video=video
-    )
+    access, created = UserVideoAccess.objects.get_or_create(user=request.user, video=video)
     
     # Check if the user has access to the video
     if access.access_count <= 0:
-        messages.error(request, 'You have no remaining views for this video')
+        messages.error(request, 'You have no remaining views for this video.')
         return redirect('course_videos', course_id=video.course.id)
     
     # Decrement the access count only after the video is successfully loaded
     access.access_count -= 1
     access.save()
 
-    video = Video.objects.get(id=video_id)
-    presigned_url = generate_presigned_url('study-material', video.s3_file_key)
+    # Get the video size and calculate the chunk range
+    video_size = get_video_size_from_s3(video.s3_file_key)
+
+    if not video_size:
+        messages.error(request, "Error: Unable to fetch video size.")
+        return redirect('course_videos', course_id=video.course.id)
+
+    # Default to entire video URL if no specific byte range is requested
+    range_start = request.GET.get('start', 0)
+    range_end = request.GET.get('end', video_size)
+
+    # Get the pre-signed URL for the chunk range
+    presigned_url = generate_presigned_url('study-material', video.s3_file_key, range_start, range_end)
+
+    if not presigned_url:
+        messages.error(request, "Error: Unable to generate a pre-signed URL for the video.")
+        return redirect('course_videos', course_id=video.course.id)
+
     # Render the template with the video and access context
     context = {
         'video': video,
         'access': access,
         'presigned_url': presigned_url,
+        'video_size': video_size,
     }
     
     return render(request, 'courses/stream_video.html', context)
+
+import boto3
+import os
+from dotenv import load_dotenv
+load_dotenv()
+def get_video_size_from_s3(file_key):
+    """
+    Helper function to get the size of the video from S3
+    """
+    # Fetch AWS credentials from environment variables
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+    CUSTOM_ENDPOINT_URL = os.getenv('CUSTOM_ENDPOINT_URL')
+    try:
+        # Get the file size from S3 using the head_object API
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+            endpoint_url=CUSTOM_ENDPOINT_URL
+        )
+        response = s3_client.head_object(Bucket='study-material', Key=file_key)
+        return response['ContentLength']  # Returns size in bytes
+    except Exception as e:
+        print(f"Error fetching video size: {e}")
+        return None
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Authentication Views
 def register_view(request):

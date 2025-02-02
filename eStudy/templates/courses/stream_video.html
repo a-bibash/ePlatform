@@ -71,60 +71,6 @@
         border-radius: 5px;
         margin-bottom: 20px;
     }
-
-    /* Custom Video Player Styles */
-    .custom-video-player {
-        position: relative;
-        width: 100%;
-        max-width: 800px;
-        margin: 0 auto;
-    }
-
-    .custom-video-player video {
-        width: 100%;
-        border-radius: 10px;
-    }
-
-    .controls {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background-color: rgba(0, 0, 0, 0.7);
-        padding: 10px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom-left-radius: 10px;
-        border-bottom-right-radius: 10px;
-    }
-
-    .controls button {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 16px;
-        cursor: pointer;
-    }
-
-    .controls button:hover {
-        color: #007bff;
-    }
-
-    .progress-bar {
-        flex-grow: 1;
-        height: 5px;
-        background-color: #444;
-        margin: 0 10px;
-        position: relative;
-        cursor: pointer;
-    }
-
-    .progress-bar .progress {
-        height: 100%;
-        background-color: #007bff;
-        width: 0;
-    }
 </style>
 {% endblock stylesheets %}
 
@@ -133,8 +79,6 @@
 <div class="video-stream-section">
     <div class="container">
         <h1>{{ video.title }}</h1>
-
-        <!-- Debugging: Print video URL and access count -->
         <p>Remaining Views: {{ access.access_count }}</p>
 
         <!-- Display messages (e.g., no remaining views) -->
@@ -153,18 +97,11 @@
         <div class="video-container">
             <!-- Custom Video Player -->
             <div class="custom-video-player">
-                <video id="videoPlayer" controlsList="nodownload">
-                    <!-- Dynamically generate the S3 file URL -->
-                    <source src="{{ presigned_url }}" type="video/mp4">
+                <video id="videoPlayer" controls controlsList="nodownload" width="100%" height="auto">
+                    <!-- Dynamically generate the S3 file URL for the video -->
+                    <source id= "videoSource" src="{{ presigned_url }}" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
-                <div class="controls">
-                    <button id="playPauseBtn">▶️</button>
-                    <div class="progress-bar" id="progressBar">
-                        <div class="progress" id="progress"></div>
-                    </div>
-                    <button id="fullscreenBtn">⛶</button>
-                </div>
             </div>
 
             <!-- Video Details -->
@@ -187,58 +124,56 @@
 </div>
 
 <script>
-    // Custom Video Player Script
     const videoPlayer = document.getElementById('videoPlayer');
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    const progressBar = document.getElementById('progressBar');
-    const progress = document.getElementById('progress');
-    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const videoSource = document.getElementById('videoSource');
 
-    // Play/Pause Button
-    playPauseBtn.addEventListener('click', () => {
-        if (videoPlayer.paused) {
-            videoPlayer.play();
-            playPauseBtn.textContent = '⏸️';
-        } else {
-            videoPlayer.pause();
-            playPauseBtn.textContent = '▶️';
+    // Set the chunk size (e.g., 5MB)
+    const chunkSize = 5 * 1024 * 1024; 
+    let currentByteStart = 0;
+    let currentByteEnd = chunkSize;
+
+    // Event listener for when the user starts playing the video
+    videoPlayer.addEventListener('play', function() {
+        loadNextChunk(currentByteStart, currentByteEnd);
+    });
+
+    // Event listener for when the user seeks to a new position in the video
+    videoPlayer.addEventListener('seeking', function() {
+        // Get the current time and calculate the byte range based on the time
+        const currentTime = videoPlayer.currentTime;
+        updateByteRange(currentTime);
+    });
+
+    // Event listener for when the time is updated
+    videoPlayer.addEventListener('timeupdate', function() {
+        const currentTime = videoPlayer.currentTime;
+        updateByteRange(currentTime);
+    });
+
+    // Function to calculate the byte range based on video time
+    function updateByteRange(currentTime) {
+        const videoLength = videoPlayer.duration;
+        const bytesPerSecond = chunkSize / videoLength;
+
+        // Calculate the start and end byte positions based on current time
+        const rangeStart = Math.floor(currentTime * bytesPerSecond);
+        const rangeEnd = rangeStart + chunkSize;
+
+        if (rangeStart !== currentByteStart || rangeEnd !== currentByteEnd) {
+            currentByteStart = rangeStart;
+            currentByteEnd = rangeEnd;
+
+            // Load the next chunk based on the calculated range
+            loadNextChunk(currentByteStart, currentByteEnd);
         }
-    });
+    }
 
-    // Update Progress Bar
-    videoPlayer.addEventListener('timeupdate', () => {
-        const percent = (videoPlayer.currentTime / videoPlayer.duration) * 100;
-        progress.style.width = `${percent}%`;
-    });
+    // Function to fetch the next video chunk
+    function loadNextChunk(startByte, endByte) {
+        //const presignedUrl = `/videos/{{ video.id }}/get_presigned_url/?start=${startByte}&end=${endByte}`;
+        //videoSource.src = presignedUrl;
+        //videoPlayer.load();
+    }
+</script> 
 
-    // Seek on Progress Bar Click
-    progressBar.addEventListener('click', (e) => {
-        const clickTime = (e.offsetX / progressBar.offsetWidth) * videoPlayer.duration;
-        videoPlayer.currentTime = clickTime;
-    });
-
-    // Fullscreen Button
-    fullscreenBtn.addEventListener('click', () => {
-        if (videoPlayer.requestFullscreen) {
-            videoPlayer.requestFullscreen();
-        } else if (videoPlayer.mozRequestFullScreen) { // Firefox
-            videoPlayer.mozRequestFullScreen();
-        } else if (videoPlayer.webkitRequestFullscreen) { // Chrome, Safari, Opera
-            videoPlayer.webkitRequestFullscreen();
-        } else if (videoPlayer.msRequestFullscreen) { // IE/Edge
-            videoPlayer.msRequestFullscreen();
-        }
-    });
-
-    // Disable Right-Click and Keyboard Shortcuts
-    document.addEventListener('contextmenu', (e) => e.preventDefault());
-    document.addEventListener('keydown', (e) => {
-        if (e.ctrlKey && (e.keyCode === 83 || e.keyCode === 85 || e.keyCode === 67)) {
-            e.preventDefault();
-        }
-        if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73) || (e.ctrlKey && e.shiftKey && e.keyCode === 74)) {
-            e.preventDefault();
-        }
-    });
-</script>
 {% endblock %}
