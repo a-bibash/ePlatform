@@ -39,7 +39,6 @@ def generate_presigned_url(bucket_name, file_key, expiration=10, range_start=Non
             Params={'Bucket': bucket_name, 'Key': file_key},
             ExpiresIn=adjusted_expiration
         )
-        print(adjusted_expiration)
         return presigned_url
 
     except Exception as e:
