@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-Learning Platform</title>
+    <title>{% block title %}E-Learning Platform{% endblock %}</title>
     <!-- Default styles -->
     <style>
         /* General Styles */
@@ -164,7 +164,9 @@
 <body>
     <!-- Navigation Bar -->
     <div class="navbar">
-        <div class="logo">E-Learning Platform</div>
+        <a href="{% url 'home' %}">
+            <div class="logo">E-Learning Platform</div>
+        </a>
         <div class="nav-links">
             {% if user.is_authenticated %}
                 <!-- Navbar for logged-in users -->

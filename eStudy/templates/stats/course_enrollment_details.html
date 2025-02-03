@@ -1,0 +1,47 @@
+{% extends 'layouts/ad_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Users enrolled on- {{ course.title }}</h2>
+    <div class="d-flex justify-content-end mb-3">
+        <a href="{% url 'export_course_users_excel' course.title %}" class="btn btn-success">
+            <i class="fas fa-file-excel"></i> Export to Excel
+        </a>        
+    </div>
+    <div class="card shadow-lg">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>S.N.</th>
+                            <th>Username</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Email</th>
+                            <th>Date Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in enrolled_users %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.first_name|default:"-" }}</td>
+                            <td>{{ user.last_name|default:"-" }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.date_joined|date:"Y-m-d H:i" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">No users enrolled in this course.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

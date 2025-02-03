@@ -3,8 +3,30 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.http import FileResponse
 from django.contrib.auth.decorators import login_required  # Import the decorator
-from .models import Course, Video, UserVideoAccess, User
+from .models import *
 from .forms import UserRegistrationForm, UserLoginForm
+from django.contrib.auth import get_user_model
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from .forms import UserRegistrationForm
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from courses.models import Course, Enrollment
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from .models import *
+from .utils import generate_presigned_url
+import boto3
+import os
+from dotenv import load_dotenv
+
+
+
+load_dotenv()
+User = get_user_model()  # Defined once at the top
+
 
 # Course Views
 
@@ -12,27 +34,40 @@ def home(request):
     courses = Course.objects.all()
     return render(request, 'home/home.html', {'courses': courses})
 
-@login_required  # Add this decorator
+
+@login_required
 def course_videos(request, course_id):
     course = get_object_or_404(Course, id=course_id)
+    user = request.user
+
+    # Check if the user is enrolled
+    is_enrolled = Enrollment.objects.filter(user=user, course=course).exists()
+    
     videos = Video.objects.filter(course=course)
+    
     return render(request, 'courses/course_details.html', {
         'course': course,
-        'videos': videos
+        'videos': videos,
+        'is_enrolled': is_enrolled,
     })
 
 
 
+@login_required
+def enroll_course(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+    user = request.user
+
+    # Check if the user is already enrolled
+    if Enrollment.objects.filter(user=user, course=course).exists():
+        messages.info(request, "You are already enrolled in this course.")
+    else:
+        Enrollment.objects.create(user=user, course=course)
+        messages.success(request, f"You have successfully enrolled in {course.title}!")
+
+    return redirect('course_videos', course_id=course.id)
 
 
-
-
-from django.shortcuts import get_object_or_404, redirect, render
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.http import Http404, JsonResponse
-from .models import Video, UserVideoAccess
-from .utils import generate_presigned_url
 
 @login_required
 def stream_video(request, video_id):
@@ -79,10 +114,9 @@ def stream_video(request, video_id):
     
     return render(request, 'courses/stream_video.html', context)
 
-import boto3
-import os
-from dotenv import load_dotenv
-load_dotenv()
+
+
+
 def get_video_size_from_s3(file_key):
     """
     Helper function to get the size of the video from S3
@@ -117,20 +151,20 @@ def get_video_size_from_s3(file_key):
 
 
 
-
-# Authentication Views
 def register_view(request):
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data.get("email")
 
+            # Check if email already exists
             if User.objects.filter(email=email).exists():
                 messages.warning(request, "This email is already in use. Please use a different email.")
                 return render(request, 'accounts/register.html', {'form': form})
 
             try:
-                user = form.save()
+                user = form.save(commit=False)  # Fix here
+                user.save()
                 messages.success(request, 'Registration successful! Please login.')
                 return redirect('login')
 
@@ -148,6 +182,7 @@ def register_view(request):
         form = UserRegistrationForm()
 
     return render(request, 'accounts/register.html', {'form': form})
+
 
 
 
@@ -203,8 +238,7 @@ def dashboard(request):
 
 
 
-from django.shortcuts import render
-from .models import Course
+
 
 @login_required
 def courses_page(request):

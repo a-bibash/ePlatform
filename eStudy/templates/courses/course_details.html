@@ -100,7 +100,6 @@
     }
 </style>
 {% endblock stylesheets %}
-
 {% block content %}
 <!-- Course Details Section -->
 <div class="course-details-section">
@@ -120,7 +119,13 @@
                 <div class="video-details">
                     <h3>{{ video.title }}</h3>
                     <p>{{ video.description|truncatewords:15 }}</p>
-                    <a href="{% url 'stream_video' video_id=video.id %}" class="btn">Watch Video</a>
+
+                    {% if is_enrolled %}
+                        <a href="{% url 'stream_video' video_id=video.id %}" class="btn btn-success">Watch Video</a>
+                    {% else %}
+                        <a href="{% url 'enroll_course' course.id %}" class="btn btn-primary">Enroll Now</a>
+                    {% endif %}
+                    
                 </div>
             </div>
             {% empty %}

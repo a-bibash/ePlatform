@@ -1,0 +1,57 @@
+{% extends 'layouts/ad_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Statistics Dashboard</h2>
+
+    <!-- Total Users Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-lg text-center p-4">
+                <h3>Total Users</h3>
+                <p class="display-4 fw-bold">{{ total_users }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Stats Section -->
+    <div class="row">
+        <!-- User Statistics -->
+        <div class="col-md-6">
+            <div class="card shadow-lg h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">User Statistics</h4>
+                        <a href="{% url 'user_stats_detail' %}" class="btn btn-sm btn-primary">View More</a>
+                    </div>
+                    <hr>
+                    <div class="stats-content">
+                        <p class="mb-2"><strong>Active Users:</strong> {{ active_users }}</p>
+                        <p class="mb-2"><strong>Users Enrolled:</strong> {{ users_enrolled }}</p>
+                        <p class="mb-0"><strong>New Users This Month:</strong> {{ new_users }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course Statistics -->
+        <div class="col-md-6">
+            <div class="card shadow-lg h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Course Statistics</h4>
+                        <a href="{% url 'course_stats_detail' %}" class="btn btn-sm btn-primary">View More</a>
+                    </div>
+                    <hr>
+                    <div class="stats-content">
+                        <p class="mb-2"><strong>Total Courses:</strong> {{ total_courses }}</p>
+                        <p class="mb-2"><strong>Most Enrolled Course:</strong> {{ most_enrolled_course }}</p>
+                        <p class="mb-0"><strong>Average Enrollments Per Course:</strong> {{ avg_enrollments }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
