@@ -20,6 +20,15 @@ urlpatterns = [
     path('login/', login_view, name='login'),
     path('register/', register_view, name='register'),
     path('logout/', logout_view, name='logout'),
+
+
+    path('videos/<int:video_id>/track_watch/', track_video_watch, name='track_video_watch'),
+
+    path('video/<int:video_id>/update_playtime/', update_playtime, name='update_playtime'),
+
 ]
+
+
+
 
 

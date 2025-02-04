@@ -99,8 +99,9 @@ class UserVideoAccess(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.pk and self.video:
-            self.playtime_left = self.video.playtime 
+            self.playtime_left = int(self.video.playtime * 1.5)
         super().save(*args, **kwargs)
+
 
     def __str__(self):
         return f"{self.user.username} - {self.video.title} ({self.playtime_left} mins left)"

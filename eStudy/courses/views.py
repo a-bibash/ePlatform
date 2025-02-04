@@ -74,21 +74,18 @@ def stream_video(request, video_id):
     # Fetch the video object, or raise a 404 if it doesn't exist
     video = get_object_or_404(Video, id=video_id)
     
-    # Track video views
+    # Track video views (but don't decrement yet)
     access, created = UserVideoAccess.objects.get_or_create(
         user=request.user, 
         video=video,
-        defaults={'playtime_left': video.playtime} 
+        defaults={'playtime_left': int(video.playtime * 1.5)} 
     )
-    
+
     # Check if the user has access to the video
-    if access.access_count <= 0:
-        messages.error(request, 'You have no remaining views for this video.')
+    if access.playtime_left <= 0 or access.access_count <= 0:
+        messages.error(request, 'You have no remaining views or playback time for this video.')
         return redirect('course_videos', course_id=video.course.id)
-    
-    # Decrement the access count only after the video is successfully loaded
-    access.access_count -= 1
-    access.save()
+
 
     # Get the video size and calculate the chunk range
     video_size = get_video_size_from_s3(video.s3_file_key)
@@ -121,6 +118,76 @@ def stream_video(request, video_id):
 
 
 
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+@login_required
+@csrf_exempt  # Only use if you’re not sending CSRF tokens from JavaScript
+def track_video_watch(request, video_id):
+    """Decrements the access count when the user starts watching."""
+    video = get_object_or_404(Video, id=video_id)
+    access = UserVideoAccess.objects.filter(user=request.user, video=video).first()
+
+    if not access:
+        return JsonResponse({'error': 'Access not found'}, status=404)
+
+    if access.access_count > 0:
+        access.access_count -= 1
+        access.save()
+        return JsonResponse({'message': 'View count updated', 'remaining_views': access.access_count})
+    
+    return JsonResponse({'error': 'No remaining views'}, status=403)
+
+
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+@csrf_exempt  # Allow AJAX requests
+@login_required
+def update_playtime(request, video_id):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            watched_seconds = int(data.get("watched_seconds", 0))  
+
+            video = get_object_or_404(Video, id=video_id)
+            access, created = UserVideoAccess.objects.get_or_create(
+                user=request.user, 
+                video=video,
+                defaults={'playtime_left': video.playtime}
+            )
+
+            # Convert watched seconds to minutes (rounding up)
+            watched_minutes = -(-watched_seconds // 60)  # Equivalent to math.ceil()
+
+            # Decrease playtime_left but never below zero
+            access.playtime_left = max(0, access.playtime_left - watched_minutes)
+            access.save()
+
+            return JsonResponse({"success": True, "playtime_left": access.playtime_left})
+
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)}, status=400)
+
+    return JsonResponse({"success": False, "error": "Invalid request"}, status=400)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def get_video_size_from_s3(file_key):
     """
     Helper function to get the size of the video from S3
@@ -144,17 +211,6 @@ def get_video_size_from_s3(file_key):
         return None
 
 
-
-
-
-
-
-
-
-
-
-
-
 def register_view(request):
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
@@ -167,7 +223,7 @@ def register_view(request):
                 return render(request, 'accounts/register.html', {'form': form})
 
             try:
-                user = form.save(commit=False)  # Fix here
+                user = form.save(commit=False)  
                 user.save()
                 messages.success(request, 'Registration successful! Please login.')
                 return redirect('login')

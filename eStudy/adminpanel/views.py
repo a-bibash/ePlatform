@@ -23,6 +23,9 @@ def user_create(request):
         return redirect('user_list')
     return render(request, 'adminpanel/user_form.html')
 
+
+
+
 def user_update(request, pk):
     user = get_object_or_404(User, pk=pk)  # Fetch the user to be edited (not request.user)
 

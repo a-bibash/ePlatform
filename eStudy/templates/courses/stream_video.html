@@ -21,55 +21,155 @@
     .video-details {
         margin-top: 20px;
     }
+    .messages {
+        margin-bottom: 20px;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    .success-message {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .back-link {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 10px 15px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+    }
+    .back-link:hover {
+        background-color: #0056b3;
+    }
 </style>
 {% endblock stylesheets %}
 
 {% block content %}
+
+
+<!-- Video.js CSS -->
+<link href="https://vjs.zencdn.net/8.3.0/video-js.css" rel="stylesheet">
+
+<!-- Video.js JavaScript -->
+<script src="https://vjs.zencdn.net/8.3.0/video.min.js"></script>
 <!-- Video Stream Section -->
 <div class="video-stream-section">
     <div class="container">
         <h1>{{ video.title }}</h1>
-        <p>Remaining Views: {{ access.access_count }}</p>
+        <p>Remaining Views: <span id="remainingViews">{{ access.access_count }}</span></p>
+        <p>Playtime Left: <span id="playtimeLeft">{{ access.playtime_left }} mins</span></p>
 
-        {% if messages %}
-        <div class="messages">
-            {% for message in messages %}
-            <div class="{% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        {% if access.access_count > 0 %}
+        {% if access.playtime_left > 0 %}
         <div class="video-container">
             <!-- Video.js Player -->
             <video id="videoPlayer" class="video-js vjs-default-skin" controls width="800" height="450" controlsList="nodownload" oncontextmenu="return false;">
                 <source src="{{ presigned_url }}" type="video/mp4">
                 Your browser does not support the video tag.
             </video>            
+            
             <!-- Video Details -->
             <div class="video-details">
                 <h2>Video Details</h2>
-                <p>{{ video.description }}</p>
+                <p>{{ video.title }}</p>
             </div>
-
             <!-- Back to Course Link -->
             <a href="{% url 'course_videos' video.course.id %}" class="back-link">&larr; Back to Course</a>
         </div>
-        {% else %}
+    {% else %}
         <p style="text-align: center; font-size: 18px; color: #666;">
-            You have no remaining views for this video.
+            {% if access.access_count > 0 %}
+                You have no remaining playback time for this video.
+            {% else %}
+                You have no remaining views for this video.
+            {% endif %}
         </p>
-        {% endif %}
+    {% endif %}
+    
     </div>
 </div>
 
-<!-- Video.js Initialization -->
+<!-- CSRF Token -->
 <script>
-    var player = videojs('videoPlayer', {
-        controls: true,
-        autoplay: true,
-        preload: 'auto'
+    document.addEventListener("DOMContentLoaded", function () {
+        var csrftoken = "{{ csrf_token }}";
+    
+        var player = videojs('videoPlayer', {
+            controls: true,
+            autoplay: false,
+            preload: 'auto'
+        });
+    
+        let hasStarted = false;
+        let watchTime = 0;
+        let updateInterval = 60;s
+        let watching = false;
+    
+
+        player.on('play', function () {
+            if (!hasStarted) {
+                hasStarted = true;
+                fetch("{% url 'track_video_watch' video.id %}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": csrftoken,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.remaining_views !== undefined) {
+                        document.getElementById("remainingViews").innerText = data.remaining_views;
+                    }
+                })
+                .catch(error => console.error("Error updating view count:", error));
+            }
+            watching = true; 
+        });
+    
+        player.on('pause', function () {
+            watching = false;
+        });
+    
+        setInterval(function () {
+            if (watching) {
+                watchTime += updateInterval;
+                fetch("{% url 'update_playtime' video.id %}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRFToken": csrftoken,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        watched_seconds: watchTime
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.playtime_left !== undefined) {
+                        let playtimeLeftEl = document.getElementById("playtimeLeft");
+                        if (playtimeLeftEl) {
+                            playtimeLeftEl.innerText = data.playtime_left + " mins left";
+                        }
+
+                        if (data.playtime_left <= 0) {
+                            player.pause();
+                            player.controls(false); 
+                            document.getElementById("videoContainer").style.display = "none"; 
+                            document.getElementById("noPlaytimeMessage").style.display = "block"; 
+                        }
+                    }
+                })
+                .catch(error => console.error("Error updating playtime:", error));
+    
+                watchTime = 0; 
+            }
+        }, updateInterval * 1000);
     });
 </script>
+
 
 {% endblock %}
