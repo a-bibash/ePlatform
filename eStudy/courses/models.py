@@ -54,6 +54,7 @@ class Video(models.Model):
     s3_file_key = models.CharField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    playtime = models.PositiveIntegerField(help_text="Duration in minutes")
 
     def __str__(self):
         return self.title
@@ -70,9 +71,9 @@ class Enrollment(models.Model):
     enrolled_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'course')  # Prevent duplicate enrollments
+        unique_together = ('user', 'course')  
         indexes = [
-            models.Index(fields=['user', 'course']),  # Optimized querying
+            models.Index(fields=['user', 'course']), 
         ]
 
     def __str__(self):
@@ -88,12 +89,19 @@ class UserVideoAccess(models.Model):
         Video, on_delete=models.CASCADE, db_index=True
     )
     access_count = models.PositiveIntegerField(default=2)
+    playtime_left = models.PositiveIntegerField(help_text="User-specific playtime")
 
     class Meta:
         unique_together = ('user', 'video')
         indexes = [
-            models.Index(fields=['user', 'video']),  # Faster lookups
+            models.Index(fields=['user', 'video']), 
         ]
 
+    def save(self, *args, **kwargs):
+        if not self.pk and self.video:
+            self.playtime_left = self.video.playtime 
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"{self.user.username} - {self.video.title}"
+        return f"{self.user.username} - {self.video.title} ({self.playtime_left} mins left)"
+

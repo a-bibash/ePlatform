@@ -75,7 +75,11 @@ def stream_video(request, video_id):
     video = get_object_or_404(Video, id=video_id)
     
     # Track video views
-    access, created = UserVideoAccess.objects.get_or_create(user=request.user, video=video)
+    access, created = UserVideoAccess.objects.get_or_create(
+        user=request.user, 
+        video=video,
+        defaults={'playtime_left': video.playtime} 
+    )
     
     # Check if the user has access to the video
     if access.access_count <= 0:

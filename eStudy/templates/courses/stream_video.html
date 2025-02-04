@@ -10,14 +10,6 @@
         padding: 40px 20px;
         background-color: #f9f9f9;
     }
-
-    .video-stream-section h1 {
-        font-size: 36px;
-        margin-bottom: 20px;
-        text-align: center;
-        color: #007bff;
-    }
-
     .video-container {
         max-width: 800px;
         margin: 0 auto;
@@ -26,50 +18,8 @@
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         padding: 20px;
     }
-
-    .video-container video {
-        width: 100%;
-        border-radius: 10px;
-    }
-
     .video-details {
         margin-top: 20px;
-    }
-
-    .video-details h2 {
-        font-size: 24px;
-        margin-bottom: 10px;
-        color: #333;
-    }
-
-    .video-details p {
-        font-size: 16px;
-        color: #666;
-    }
-
-    .back-link {
-        display: inline-block;
-        margin-top: 20px;
-        color: #007bff;
-        text-decoration: none;
-        font-size: 16px;
-    }
-
-    .back-link:hover {
-        text-decoration: underline;
-    }
-
-    .messages {
-        margin-bottom: 20px;
-    }
-
-    .messages .error {
-        color: #dc3545;
-        background-color: #f8d7da;
-        border-color: #f5c6cb;
-        padding: 10px;
-        border-radius: 5px;
-        margin-bottom: 20px;
     }
 </style>
 {% endblock stylesheets %}
@@ -81,29 +31,21 @@
         <h1>{{ video.title }}</h1>
         <p>Remaining Views: {{ access.access_count }}</p>
 
-        <!-- Display messages (e.g., no remaining views) -->
         {% if messages %}
         <div class="messages">
             {% for message in messages %}
-            <div class="{% if message.tags %}{{ message.tags }}{% endif %}">
-                {{ message }}
-            </div>
+            <div class="{% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
             {% endfor %}
         </div>
         {% endif %}
 
-        <!-- Check if the user has access to the video -->
         {% if access.access_count > 0 %}
         <div class="video-container">
-            <!-- Custom Video Player -->
-            <div class="custom-video-player">
-                <video id="videoPlayer" controls controlsList="nodownload" width="100%" height="auto">
-                    <!-- Dynamically generate the S3 file URL for the video -->
-                    <source id= "videoSource" src="{{ presigned_url }}" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
-            </div>
-
+            <!-- Video.js Player -->
+            <video id="videoPlayer" class="video-js vjs-default-skin" controls width="800" height="450" controlsList="nodownload" oncontextmenu="return false;">
+                <source src="{{ presigned_url }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>            
             <!-- Video Details -->
             <div class="video-details">
                 <h2>Video Details</h2>
@@ -111,9 +53,7 @@
             </div>
 
             <!-- Back to Course Link -->
-            <a href="{% url 'course_videos' video.course.id %}" class="back-link">
-                &larr; Back to Course
-            </a>
+            <a href="{% url 'course_videos' video.course.id %}" class="back-link">&larr; Back to Course</a>
         </div>
         {% else %}
         <p style="text-align: center; font-size: 18px; color: #666;">
@@ -123,66 +63,13 @@
     </div>
 </div>
 
+<!-- Video.js Initialization -->
 <script>
-    const videoPlayer = document.getElementById('videoPlayer');
-    const videoSource = document.getElementById('videoSource');
-
-    // Set the chunk size (e.g., 5MB)
-    const chunkSize = 5 * 1024 * 1024; 
-    let currentByteStart = 0;
-    let currentByteEnd = chunkSize;
-
-    // Event listener for when the user starts playing the video
-    videoPlayer.addEventListener('play', function() {
-        loadNextChunk(currentByteStart, currentByteEnd);
+    var player = videojs('videoPlayer', {
+        controls: true,
+        autoplay: true,
+        preload: 'auto'
     });
-
-    // Event listener for when the user seeks to a new position in the video
-    videoPlayer.addEventListener('seeking', function() {
-        // Get the current time and calculate the byte range based on the time
-        const currentTime = videoPlayer.currentTime;
-        updateByteRange(currentTime);
-    });
-
-    // Event listener for when the time is updated
-    videoPlayer.addEventListener('timeupdate', function() {
-        const currentTime = videoPlayer.currentTime;
-        updateByteRange(currentTime);
-    });
-
-    // Function to calculate the byte range based on video time
-    function updateByteRange(currentTime) {
-        const videoLength = videoPlayer.duration;
-        const bytesPerSecond = chunkSize / videoLength;
-
-        // Calculate the start and end byte positions based on current time
-        const rangeStart = Math.floor(currentTime * bytesPerSecond);
-        const rangeEnd = rangeStart + chunkSize;
-
-        if (rangeStart !== currentByteStart || rangeEnd !== currentByteEnd) {
-            currentByteStart = rangeStart;
-            currentByteEnd = rangeEnd;
-
-            // Load the next chunk based on the calculated range
-            loadNextChunk(currentByteStart, currentByteEnd);
-        }
-    }
-
-    // Function to fetch the next video chunk
-    function loadNextChunk(startByte, endByte) {
-        //const presignedUrl = `/videos/{{ video.id }}/get_presigned_url/?start=${startByte}&end=${endByte}`;
-        //videoSource.src = presignedUrl;
-        //videoPlayer.load();
-    }
-    document.addEventListener("visibilitychange", function() {
-        const video = document.getElementById("video-player");
-        if (document.hidden) {
-            video.style.filter = "brightness(0%)"; // Blackout video
-        } else {
-            video.style.filter = "brightness(100%)"; // Restore video
-        }
-    });
-    
-</script> 
+</script>
 
 {% endblock %}

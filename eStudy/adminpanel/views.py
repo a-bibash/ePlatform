@@ -24,16 +24,20 @@ def user_create(request):
     return render(request, 'adminpanel/user_form.html')
 
 def user_update(request, pk):
-    user = get_object_or_404(User, pk=pk)
+    user = get_object_or_404(User, pk=pk)  # Fetch the user to be edited (not request.user)
+
     if request.method == 'POST':
-        user.username = request.POST['username']
-        user.email = request.POST['email']
-        if request.POST['password']:
+        user.username = request.POST.get('username', user.username)
+        user.email = request.POST.get('email', user.email)
+        if request.POST.get('password'):  # Only update password if provided
             user.set_password(request.POST['password'])
         user.save()
         messages.success(request, 'User updated successfully.')
         return redirect('user_list')
-    return render(request, 'adminpanel/user_form.html', {'user': user})
+
+    return render(request, 'adminpanel/user_form.html', {'user': user})  # Pass the correct user
+
+
 
 def user_delete(request, pk):
     user = get_object_or_404(User, pk=pk)

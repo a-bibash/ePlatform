@@ -7,33 +7,33 @@
 {% endblock %}
 
 {% block content %}
-<h1>{% if form.instance.pk %}Edit User{% else %}Add User{% endif %}</h1>
+<h1>{% if '/update/' in request.path %}Edit User{% else %}Add User{% endif %}</h1>
 
 <form method="post">
     {% csrf_token %}
-    
+
     <div class="form-group">
         <label for="username">Username</label>
         <input type="text" class="form-control" id="username" name="username" 
-               value="{% if form.instance.pk %}{{ form.instance.username }}{% else %}{% endif %}" required>
+               value="{% if '/update/' in request.path %}{{ user.username}}{% else %}{% endif %}" required>
     </div>
 
     <div class="form-group">
         <label for="email">Email</label>
         <input type="email" class="form-control" id="email" name="email" 
-               value="{% if form.instance.pk %}{{ form.instance.email }}{% else %}{% endif %}" required>
+               value="{% if '/update/' in request.path %}{{ user.email}}{% else %}{% endif %}" required>
     </div>
 
     <div class="form-group">
         <label for="password">Password</label>
         <input type="password" class="form-control" id="password" name="password" {% if not form.instance.pk %}required{% endif %}>
-        {% if form.instance.pk %}
+        {% if '/update/' in request.path %}
             <small class="text-muted">Leave blank to keep the current password.</small>
         {% endif %}
     </div>
 
     <button type="submit" class="btn btn-primary">
-        {% if form.instance.pk %}Update{% else %}Create{% endif %}
+        {% if '/update/' in request.path %}Update{% else %}Create{% endif %}
     </button>
 
     <a href="{% url 'user_list' %}" class="btn btn-secondary">Cancel</a>
