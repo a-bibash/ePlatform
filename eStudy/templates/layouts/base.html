@@ -257,11 +257,9 @@
                 window.location.href = "/"; // Redirect to home screen
                 console.warn("Developer Tools is open.");
                 alert("Warning: Developer Tools is open. Please close it to continue.");
-                // You can also redirect the user or disable certain features
                 
             }
         }
-        // Check DevTools status periodically
         setInterval(detectDevTools, 1000);
     
         // Existing security scripts
@@ -278,6 +276,29 @@
         document.addEventListener('keydown', function(e) {
             if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73) || (e.ctrlKey && e.shiftKey && e.keyCode === 74)) {
                 e.preventDefault();
+            }
+        });
+        document.addEventListener("DOMContentLoaded", function () {
+            function removeNotifications() {
+                const notifications = document.querySelectorAll(".notification");
+                notifications.forEach(notification => {
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 4000); 
+                });
+            }
+        
+            // Remove existing notifications on page load
+            removeNotifications();
+        
+            // Observe for dynamically added notifications
+            const container = document.querySelector(".notification-container");
+            if (container) {
+                const observer = new MutationObserver(() => {
+                    removeNotifications();
+                });
+        
+                observer.observe(container, { childList: true });
             }
         });
     

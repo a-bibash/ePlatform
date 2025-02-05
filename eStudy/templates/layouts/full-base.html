@@ -253,6 +253,32 @@
                 e.preventDefault();
             }
         });
+
+
+        document.addEventListener("DOMContentLoaded", function () {
+            function removeNotifications() {
+                const notifications = document.querySelectorAll(".notification");
+                notifications.forEach(notification => {
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 4000); 
+                });
+            }
+        
+            // Remove existing notifications on page load
+            removeNotifications();
+        
+            // Observe for dynamically added notifications
+            const container = document.querySelector(".notification-container");
+            if (container) {
+                const observer = new MutationObserver(() => {
+                    removeNotifications();
+                });
+        
+                observer.observe(container, { childList: true });
+            }
+        });
+    
     </script>
     
     {% endblock javascripts %}
