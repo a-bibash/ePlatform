@@ -40,7 +40,7 @@
         </div>
         {% endif %}
         
-        <button type="submit" class="btn btn-primary" id="submit-btn" disabled>Save</button>
+        <button type="submit" class="btn btn-primary" id="submit-btn" >Save</button>
         <a href="{% url 'model_list' app_label='courses' model_name=model_name %}" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
@@ -50,6 +50,8 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        const modelName = "{{ model_name|lower }}";
+        const isVideoModel = modelName === "video";
         // Hide label and input for s3_file_key
         const s3FileKeyLabel = document.querySelector("label[for='id_s3_file_key']");
         const s3FileKeyInput = document.getElementById("id_s3_file_key");
@@ -57,60 +59,67 @@
         if (s3FileKeyLabel) s3FileKeyLabel.style.display = "none";
         if (s3FileKeyInput) s3FileKeyInput.style.display = "none";
 
-        const addVideoBtn = document.getElementById("add-video-btn");
-        const submitBtn = document.getElementById("submit-btn");
-        const videoFileInput = document.getElementById("video_file");
-        const uploadStatus = document.getElementById("upload-status");
 
-        addVideoBtn.addEventListener("click", function () {
-            const videoFile = videoFileInput.files[0];
+        if (isVideoModel) {
+            const addVideoBtn = document.getElementById("add-video-btn");
+            const submitBtn = document.getElementById("submit-btn");
+            const videoFileInput = document.getElementById("video_file");
+            const uploadStatus = document.getElementById("upload-status");
 
-            if (!videoFile) {
-                alert("Please select a video file to upload.");
-                return;
-            }
+            // Disable submit button only for video model
+            submitBtn.disabled = true;
 
-            uploadStatus.textContent = "Uploading video...";
-            addVideoBtn.disabled = true;
+            addVideoBtn.addEventListener("click", function () {
+                const videoFile = videoFileInput.files[0];
 
-            const formData = new FormData();
-            formData.append("video_file", videoFile);
-
-            fetch("{% url 'upload_video' %}", {
-                method: "POST",
-                body: formData,
-                headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                if (!videoFile) {
+                    alert("Please select a video file to upload.");
+                    return;
                 }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message) {
-                    uploadStatus.textContent = data.message;
-                    submitBtn.disabled = false;
 
-                    // Add or update the hidden input for s3 file key
-                    let hiddenInput = document.getElementById("s3_file_key");
-                    if (!hiddenInput) {
-                        hiddenInput = document.createElement("input");
-                        hiddenInput.type = "hidden";
-                        hiddenInput.name = "s3_file_key";
-                        hiddenInput.id = "s3_file_key";
-                        document.getElementById("data-form").appendChild(hiddenInput);
+                uploadStatus.textContent = "Uploading video...";
+                addVideoBtn.disabled = true;
+
+                const formData = new FormData();
+                formData.append("video_file", videoFile);
+
+                fetch("{% url 'upload_video' %}", {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
                     }
-                    hiddenInput.value = `videos/${videoFile.name}`;
-                } else if (data.error) {
-                    uploadStatus.textContent = `Error: ${data.error}`;
-                }
-                addVideoBtn.disabled = false;
-            })
-            .catch(error => {
-                uploadStatus.textContent = `Unexpected error: ${error}`;
-                addVideoBtn.disabled = false;
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        uploadStatus.textContent = data.message;
+                        submitBtn.disabled = false;
+
+                        // Add or update the hidden input for s3 file key
+                        let hiddenInput = document.getElementById("s3_file_key");
+                        if (!hiddenInput) {
+                            hiddenInput = document.createElement("input");
+                            hiddenInput.type = "hidden";
+                            hiddenInput.name = "s3_file_key";
+                            hiddenInput.id = "s3_file_key";
+                            document.getElementById("data-form").appendChild(hiddenInput);
+                        }
+                        hiddenInput.value = `videos/${videoFile.name}`;
+                    } else if (data.error) {
+                        uploadStatus.textContent = `Error: ${data.error}`;
+                    }
+                    addVideoBtn.disabled = false;
+                })
+                .catch(error => {
+                    uploadStatus.textContent = `Unexpected error: ${error}`;
+                    addVideoBtn.disabled = false;
+                });
             });
-        });
+        }
     });
 </script>
+
 
 
 {% endblock %}
