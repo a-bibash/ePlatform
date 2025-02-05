@@ -5,13 +5,31 @@ from django.contrib import messages
 from django.apps import apps
 from courses.models import *
 from django.forms import modelform_factory
-# from django.contrib.auth.models import User  # Default User model
 from django.contrib.auth import get_user_model
-User = get_user_model()  # Defined once at the top
+from django.utils.timezone import now, timedelta
+
+import pandas as pd
+from django.http import HttpResponse
+from django.utils.timezone import make_naive
+
+import boto3
+import requests
+import os
+from dotenv import load_dotenv
+from botocore.exceptions import ClientError
+from botocore.config import Config
+from django.http import JsonResponse, HttpResponseBadRequest
+from django.views.decorators.csrf import csrf_exempt
+from django.core.files.storage import default_storage
+
+
+User = get_user_model() 
+
 
 def user_list(request):
     users = User.objects.all()
     return render(request, 'adminpanel/user_list.html', {'users': users})
+
 
 def user_create(request):
     if request.method == 'POST':
@@ -25,21 +43,19 @@ def user_create(request):
 
 
 
-
 def user_update(request, pk):
-    user = get_object_or_404(User, pk=pk)  # Fetch the user to be edited (not request.user)
+    user = get_object_or_404(User, pk=pk) 
 
     if request.method == 'POST':
         user.username = request.POST.get('username', user.username)
         user.email = request.POST.get('email', user.email)
-        if request.POST.get('password'):  # Only update password if provided
+        if request.POST.get('password'):  
             user.set_password(request.POST['password'])
         user.save()
         messages.success(request, 'User updated successfully.')
         return redirect('user_list')
 
-    return render(request, 'adminpanel/user_form.html', {'user': user})  # Pass the correct user
-
+    return render(request, 'adminpanel/user_form.html', {'user': user})  
 
 
 def user_delete(request, pk):
@@ -51,9 +67,9 @@ def user_delete(request, pk):
 
 
 def model_list(request, app_label, model_name):
-    # Get the model dynamically
+   
     if app_label == 'auth' and model_name == 'user':
-        model = User  # Default User model
+        model = User  
     else:
         model = apps.get_model(app_label=app_label, model_name=model_name)
 
@@ -68,21 +84,15 @@ def model_list(request, app_label, model_name):
 
 
 def model_create(request, app_label, model_name):
-    # Get the model using the provided app_label and model_name
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    
-    # Dynamically create a ModelForm for the model
     ModelForm = modelform_factory(model, fields='__all__')
-    
     if request.method == 'POST':
-        # Create a new object with the submitted data
         form = ModelForm(request.POST)
         if form.is_valid():
             form.save()
             messages.success(request, f'{model_name} created successfully.')
             return redirect('model_list', app_label=app_label, model_name=model_name)
     else:
-        # Display an empty form for creating a new object
         form = ModelForm()
     
     return render(request, 'adminpanel/model_form.html', {'form': form, 'model_name': model_name})
@@ -93,24 +103,19 @@ def model_create(request, app_label, model_name):
 
 
 def model_update(request, app_label, model_name, pk):
-    # Get the model using the provided app_label and model_name
     model = apps.get_model(app_label=app_label, model_name=model_name)
     
-    # Retrieve the object to be updated
     obj = get_object_or_404(model, pk=pk)
     
-    # Dynamically create a ModelForm for the model
     ModelForm = modelform_factory(model, fields='__all__')
     
     if request.method == 'POST':
-        # Update the object with the submitted data
         form = ModelForm(request.POST, instance=obj)
         if form.is_valid():
             form.save()
             messages.success(request, f'{model_name} updated successfully.')
             return redirect('model_list', app_label=app_label, model_name=model_name)
     else:
-        # Display the form with the current object data
         form = ModelForm(instance=obj)
     
     return render(request, 'adminpanel/model_form.html', {'form': form, 'model_name': model_name})
@@ -120,81 +125,50 @@ def model_update(request, app_label, model_name, pk):
 
 
 def model_delete(request, app_label, model_name, pk):
-    # Get the model using the provided app_label and model_name
     model = apps.get_model(app_label=app_label, model_name=model_name)
     
-    # Retrieve the object to be deleted
     obj = get_object_or_404(model, pk=pk)
     
-    # Delete the object
     obj.delete()
     messages.success(request, f'{model_name} deleted successfully.')
     
-    # Redirect to the model list view
     return redirect('model_list', app_label=app_label, model_name=model_name)
 
 
 
-from django.apps import apps
-from django.contrib.auth import get_user_model
-from django.shortcuts import render
-
 def home(request):
-    User = get_user_model()  # Get the currently used User model
-
-    # Store User model info separately to ensure it appears only once
+    User = get_user_model()  
     user_model_info = {
         'name': User.__name__,
         'app_label': User._meta.app_label,
         'verbose_name': User._meta.verbose_name_plural,
     }
 
-    # Get all models from your custom apps, excluding duplicates of User
     custom_models_info = []
     for app_config in apps.get_app_configs():
         if not app_config.name.startswith('django.') and app_config.name != 'adminpanel':
             for model in app_config.get_models():
-                if model.__name__.lower() != "user":  # Ensure we don't add 'User' twice
+                if model.__name__.lower() != "user": 
                     custom_models_info.append({
                         'name': model.__name__,
                         'app_label': model._meta.app_label,
                         'verbose_name': model._meta.verbose_name_plural,
                     })
 
-    # Combine User model and other models
     models = [user_model_info] + custom_models_info
 
     return render(request, 'adminpanel/home.html', {'models': models})
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-from django.shortcuts import render
-from django.utils.timezone import now, timedelta
-from django.contrib.auth import get_user_model
-from courses.models import Enrollment, Course
-
-User = get_user_model()
-
 def stats_dashboard_view(request):
-    # User Statistics
+
     total_users = User.objects.count()
     new_users = User.objects.filter(date_joined__gte=now() - timedelta(days=30)).count()
     users_enrolled = Enrollment.objects.values("user").distinct().count()
     users_not_enrolled = total_users - users_enrolled
     active_users = User.objects.filter(is_active=True).count()
 
-    # Course Statistics
     total_courses = Course.objects.count()
     most_enrolled_course = (
         Course.objects.annotate(enrollment_count=models.Count("enrollments"))
@@ -218,14 +192,6 @@ def stats_dashboard_view(request):
     return render(request, "stats/stats_dashboard.html", context)
 
 
-
-
-from django.shortcuts import render
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
-
-# User Stats Detailed View
 def user_stats_detail(request):
     users = User.objects.values("first_name", "last_name", "email", "date_joined",'username')
     context = {
@@ -233,19 +199,6 @@ def user_stats_detail(request):
     }
     return render(request, "stats/user_stats_details.html", context)
 
-
-
-
-
-
-
-
-import pandas as pd
-from django.http import HttpResponse
-from django.contrib.auth import get_user_model
-from django.utils.timezone import make_naive
-
-User = get_user_model()
 
 def export_users_excel(request):
     # Exclude sensitive fields if needed
@@ -340,18 +293,6 @@ def course_enrollment_details(request, course_title):
 
 
 
-
-
-
-import pandas as pd
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
-from django.utils.timezone import make_naive
-from django.contrib.auth import get_user_model
-from courses.models import Course, Enrollment
-
-User = get_user_model()
-
 def export_course_users_excel(request, course_title):
     # Get the course object
     course = get_object_or_404(Course, title=course_title)
@@ -384,3 +325,69 @@ def export_course_users_excel(request, course_title):
     df.to_excel(response, index=False, engine='openpyxl')
 
     return response
+
+
+
+load_dotenv()
+
+CUSTOM_ENDPOINT_URL = os.getenv('CUSTOM_ENDPOINT_URL')
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+BUCKET_NAME = os.getenv('BUCKET_NAME')
+
+# Generate a pre-signed URL to upload a file to S3
+def upload_presigned_url(bucket_name, file_key):
+    try:
+        s3_client = boto3.client(
+            's3',
+            config=Config(s3={'addressing_style': 'path'}),
+            endpoint_url=CUSTOM_ENDPOINT_URL,
+            aws_access_key_id=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        )
+
+        presigned_url = s3_client.generate_presigned_url(
+            'put_object',
+            Params={'Bucket': bucket_name, 'Key': file_key},
+            ExpiresIn=3600
+        )
+        return presigned_url
+
+    except ClientError as e:
+        print(f"AWS Client Error: {e.response['Error']['Message']}")
+        return None
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return None
+
+
+@csrf_exempt
+def upload_video_view(request):
+    if request.method == 'POST' and request.FILES.get('video_file'):
+        video_file = request.FILES['video_file']
+        file_key = f"videos/{video_file.name}"
+
+    
+        presigned_url = upload_presigned_url(BUCKET_NAME, file_key)
+        if not presigned_url:
+            return JsonResponse({"error": "Failed to generate presigned URL."}, status=500)
+
+        try:
+           
+            temp_file_path = default_storage.save(video_file.name, video_file)
+            local_file_path = default_storage.path(temp_file_path)
+
+            with open(local_file_path, 'rb') as file_data:
+                response = requests.put(presigned_url, data=file_data)
+
+            default_storage.delete(temp_file_path)
+
+            if response.status_code == 200:
+                return JsonResponse({"message": "Video uploaded successfully!", "url": presigned_url})
+            else:
+                return JsonResponse({"error": f"Upload failed: {response.status_code}, {response.text}"}, status=500)
+
+        except Exception as e:
+            return JsonResponse({"error": f"Unexpected error: {str(e)}"}, status=500)
+    
+    return HttpResponseBadRequest("Invalid request. Please upload a valid video file.")

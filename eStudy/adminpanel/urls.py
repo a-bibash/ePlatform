@@ -22,6 +22,8 @@ urlpatterns = [
     path('stats/courses/', course_stats_detail, name='course_stats_detail'),
     path('stats/courses/<str:course_title>/enrollments/', course_enrollment_details, name='course_enrollment_details'),
     path('stats/courses/<str:course_title>/export/', export_course_users_excel, name='export_course_users_excel'),
+    
+    path('upload-video/', upload_video_view, name='upload_video'),
 ]
 
 

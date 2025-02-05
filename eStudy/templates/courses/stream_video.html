@@ -17,6 +17,7 @@
         border-radius: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         padding: 20px;
+        position: relative;
     }
     .video-details {
         margin-top: 20px;
@@ -44,17 +45,30 @@
     .back-link:hover {
         background-color: #0056b3;
     }
+
+    /* Watermark Styles */
+    .watermark {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.8);
+        padding: 5px 10px;
+        border-radius: 5px;
+        pointer-events: none;
+        z-index: 10;
+    }
 </style>
 {% endblock stylesheets %}
 
 {% block content %}
-
 
 <!-- Video.js CSS -->
 <link href="https://vjs.zencdn.net/8.3.0/video-js.css" rel="stylesheet">
 
 <!-- Video.js JavaScript -->
 <script src="https://vjs.zencdn.net/8.3.0/video.min.js"></script>
+
 <!-- Video Stream Section -->
 <div class="video-stream-section">
     <div class="container">
@@ -63,13 +77,14 @@
         <p>Playtime Left: <span id="playtimeLeft">{{ access.playtime_left }} mins</span></p>
 
         {% if access.playtime_left > 0 %}
-        <div class="video-container">
+        <div class="video-container" id="videoContainer">
             <!-- Video.js Player -->
             <video id="videoPlayer" class="video-js vjs-default-skin" controls width="800" height="450" controlsList="nodownload" oncontextmenu="return false;">
                 <source src="{{ presigned_url }}" type="video/mp4">
                 Your browser does not support the video tag.
-            </video>            
-            
+            </video>
+            <div class="watermark">Your Watermark Text</div>
+
             <!-- Video Details -->
             <div class="video-details">
                 <h2>Video Details</h2>
@@ -78,7 +93,7 @@
             <!-- Back to Course Link -->
             <a href="{% url 'course_videos' video.course.id %}" class="back-link">&larr; Back to Course</a>
         </div>
-    {% else %}
+        {% else %}
         <p style="text-align: center; font-size: 18px; color: #666;">
             {% if access.access_count > 0 %}
                 You have no remaining playback time for this video.
@@ -86,8 +101,7 @@
                 You have no remaining views for this video.
             {% endif %}
         </p>
-    {% endif %}
-    
+        {% endif %}
     </div>
 </div>
 
@@ -95,18 +109,17 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         var csrftoken = "{{ csrf_token }}";
-    
+
         var player = videojs('videoPlayer', {
             controls: true,
             autoplay: false,
             preload: 'auto'
         });
-    
+
         let hasStarted = false;
         let watchTime = 0;
         let updateInterval = 60;
         let watching = false;
-    
 
         player.on('play', function () {
             if (!hasStarted) {
@@ -129,11 +142,11 @@
             }
             watching = true; 
         });
-    
+
         player.on('pause', function () {
             watching = false;
         });
-    
+
         setInterval(function () {
             if (watching) {
                 watchTime += updateInterval;
@@ -164,12 +177,11 @@
                     }
                 })
                 .catch(error => console.error("Error updating playtime:", error));
-    
+
                 watchTime = 0; 
             }
         }, updateInterval * 1000);
     });
 </script>
-
 
 {% endblock %}

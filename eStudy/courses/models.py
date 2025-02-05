@@ -12,13 +12,13 @@ class User(AbstractUser):
 
     groups = models.ManyToManyField(
         "auth.Group",
-        related_name="custom_user_groups",  # Avoids conflict with default User model
+        related_name="custom_user_groups", 
         blank=True
     )
     
     user_permissions = models.ManyToManyField(
         "auth.Permission",
-        related_name="custom_user_permissions",  # Avoids conflict
+        related_name="custom_user_permissions",  
         blank=True
     )
 
@@ -51,7 +51,7 @@ class Video(models.Model):
         Course, related_name='videos', on_delete=models.CASCADE, db_index=True
     )
     title = models.CharField(max_length=255, db_index=True)
-    s3_file_key = models.CharField(max_length=500)
+    s3_file_key = models.CharField(max_length=500,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     playtime = models.PositiveIntegerField(help_text="Duration in minutes")

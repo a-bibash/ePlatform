@@ -23,7 +23,7 @@
             <td>{{ obj }}</td>
             <td>
                 <a href="{% url 'model_update' app_label=app_label model_name=model_name pk=obj.pk %}" class="btn btn-sm btn-warning">Edit</a>
-                <a href="{% url 'model_delete' app_label=app_label model_name=model_name pk=obj.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                <a href="{% url 'model_delete' app_label=app_label model_name=model_name pk=obj.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete user?')">Delete</a>
             </td>
         </tr>
         {% endfor %}
