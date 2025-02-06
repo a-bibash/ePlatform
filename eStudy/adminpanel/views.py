@@ -1,6 +1,5 @@
 # Create your views here.
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.models import User
 from django.contrib import messages
 from django.apps import apps
 from courses.models import *
@@ -342,8 +341,7 @@ CUSTOM_ENDPOINT_URL = os.getenv('CUSTOM_ENDPOINT_URL')
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 BUCKET_NAME = os.getenv('BUCKET_NAME')
-@login_required  
-# Generate a pre-signed URL to upload a file to S3
+
 def upload_presigned_url(bucket_name, file_key):
     try:
         s3_client = boto3.client(
@@ -369,8 +367,9 @@ def upload_presigned_url(bucket_name, file_key):
         return None
 
 
-@csrf_exempt
+
 @login_required  
+@csrf_exempt
 def upload_video_view(request):
     if request.method == 'POST' and request.FILES.get('video_file'):
         video_file = request.FILES['video_file']
