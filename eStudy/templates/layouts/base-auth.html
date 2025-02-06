@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>{% block title %}{% endblock title %} | Datta able Dashboard Template</title>
+    {% include "includes/head.html" %}
+    <style>
+      /* General Styles */
+      body {
+          font-family: 'Arial', sans-serif;
+          margin: 0;
+          padding: 0;
+          background-color: #f9f9f9;
+          color: #333;
+      }
+
+      a {
+          text-decoration: none;
+          color: inherit;
+      }
+
+      /* Navigation Bar */
+      .navbar {
+          background-color: #007bff;
+          padding: 15px 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      .navbar .logo {
+          font-size: 24px;
+          font-weight: bold;
+          color: white;
+      }
+
+      .navbar .nav-links a {
+          color: white;
+          margin-left: 20px;
+          font-size: 16px;
+      }
+
+      .navbar .nav-links a:hover {
+          text-decoration: underline;
+      }
+
+      /* Footer */
+      .footer {
+          background-color: #333;
+          color: white;
+          padding: 20px;
+          text-align: center;
+          margin-top: 50px;
+      }
+
+      .footer a {
+          color: #007bff;
+      }
+
+      .footer a:hover {
+          text-decoration: underline;
+      }
+
+      .notification-container {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%; /* Ensures the container spans the full width */
+          height: 100%; /* Ensures it spans the full height */
+          z-index: 9999; /* Places it above other elements */
+          pointer-events: none; /* Prevents interaction interference */
+      }
+      
+      .notification {
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          padding: 10px 20px;
+          margin: 10px;
+          border-radius: 5px;
+          box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+          color: #fff;
+          font-size: 14px;
+          animation: fade-in 0.5s ease-out, fade-out 0.5s ease-in 4.5s; /* Adds fade-out animation */
+          pointer-events: auto; /* Allows interaction with notifications */
+          max-width: 300px; /* Prevents overly wide notifications */
+          word-wrap: break-word; /* Handles long text gracefully */
+      }
+      
+      .notification-error {
+          background-color: #ff5252;
+          position: absolute; /* Positions relative to the container */
+          bottom: 20px;
+          right: 20px;
+      }
+      
+      .notification-success {
+          background-color: #4caf50;
+          position: absolute; /* Positions relative to the container */
+          bottom: 20px;
+          right: 20px;
+      }
+      .notification-warning {
+          background-color: #ffa726; /* Orange color for warnings */
+          position: absolute; /* Positions relative to the container */
+          bottom: 20px;
+          right: 20px; /* Aligns it to the bottom-right corner */
+          color: #fff;
+          pointer-events: auto; /* Allows interaction with notifications */
+          z-index: 10000; /* Ensure it's above other elements */
+      }
+      .notification-info {
+          background-color: #2196f3; /* Blue color for info messages */
+          position: absolute; /* Positions relative to the container */
+          top: 20px; /* Distance from the top of the page */
+          left: 50%; /* Horizontally centers it */
+          color: #fff;
+          pointer-events: auto; /* Allows interaction with notifications */
+          z-index: 10000; /* Ensure it's above other elements */
+          padding: 10px 20px;
+          border-radius: 5px;
+          box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+          font-size: 14px;
+      }
+      
+      
+      
+      
+      .notification .icon {
+          margin-right: 10px;
+          font-size: 18px;
+      }
+      
+      @keyframes fade-in {
+          from {
+              opacity: 0;
+              transform: translateY(-10px);
+          }
+          to {
+              opacity: 1;
+              transform: translateY(0);
+          }
+      }
+      
+      @keyframes fade-out {
+          from {
+              opacity: 1;
+              transform: translateY(0);
+          }
+          to {
+              opacity: 0;
+              transform: translateY(-10px);
+          }
+      }
+
+
+
+  </style>
+    {% block extrastyle %}{% endblock extrastyle %}
+  </head>
+
+  <body data-pc-preset="preset-1" data-pc-sidebar-caption="true" data-pc-direction="ltr" data-pc-theme="light">
+    <!-- Notification Container -->
+    <div class="notification-container">
+      {% if messages %}
+          {% for message in messages %}
+              {% if message.tags == "error" %}
+                  <div class="notification notification-error">
+                      <span class="icon">✖</span>
+                      <span>{{ message }}</span>
+                  </div>
+              {% elif message.tags == "success" %}
+                  <div class="notification notification-success">
+                      <span class="icon">✔</span>
+                      <span>{{ message }}</span>
+                  </div>
+              {% elif message.tags == "warning" %}
+                  <div class="notification notification-warning">
+                      <span class="icon">⚠</span>
+                      <span>{{ message }}</span>
+                  </div>
+              {% elif message.tags == "info" %}
+                  <div class="notification notification-info">
+                      <span class="icon">ⓘ</span>
+                      <span>{{ message }}</span>
+                  </div>
+              {% endif %}
+          {% endfor %}
+      {% endif %}
+  </div>
+    {% block loader %}
+      {% include "includes/loader.html" %}
+    {% endblock loader %}
+
+    {% block content %}{% endblock content %}
+
+    {% include "includes/scripts.html" %}
+    <script>
+      document.addEventListener('keydown', function(event) {
+          if (event.ctrlKey && (event.keyCode === 83 || event.keyCode === 85 || event.keyCode === 67)) {
+              event.preventDefault();
+          }
+      });
+  
+      document.addEventListener('contextmenu', function(e) {
+          e.preventDefault();
+      });
+  
+      document.addEventListener('keydown', function(e) {
+          if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73) || (e.ctrlKey && e.shiftKey && e.keyCode === 74)) {
+              e.preventDefault();
+          }
+      });
+
+
+      // Function to detect if DevTools is open
+      function detectDevTools() {
+          const devToolsOpened = () => {
+              const widthThreshold = window.outerWidth - window.innerWidth > 160;
+              const heightThreshold = window.outerHeight - window.innerHeight > 160;
+              return widthThreshold || heightThreshold;
+          };
+  
+          if (devToolsOpened()) {
+              window.location.href = "/"; // Redirect to home screen
+              console.warn("Developer Tools is open.");
+              alert("Warning: Developer Tools is open. Please close it to continue.");
+              
+          }
+      }
+      setInterval(detectDevTools, 1000);
+  
+      // Existing security scripts
+      document.addEventListener('keydown', function(event) {
+          if (event.ctrlKey && (event.keyCode === 83 || event.keyCode === 85 || event.keyCode === 67)) {
+              event.preventDefault();
+          }
+      });
+  
+      document.addEventListener('contextmenu', function(e) {
+          e.preventDefault();
+      });
+  
+      document.addEventListener('keydown', function(e) {
+          if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73) || (e.ctrlKey && e.shiftKey && e.keyCode === 74)) {
+              e.preventDefault();
+          }
+      });
+      document.addEventListener("DOMContentLoaded", function () {
+          function removeNotifications() {
+              const notifications = document.querySelectorAll(".notification");
+              notifications.forEach(notification => {
+                  setTimeout(() => {
+                      notification.remove();
+                  }, 4000); 
+              });
+          }
+      
+          // Remove existing notifications on page load
+          removeNotifications();
+      
+          // Observe for dynamically added notifications
+          const container = document.querySelector(".notification-container");
+          if (container) {
+              const observer = new MutationObserver(() => {
+                  removeNotifications();
+              });
+      
+              observer.observe(container, { childList: true });
+          }
+      });
+
+  </script>
+    {% block extra_js %}{% endblock extra_js %}
+  
+  </body>
+</html>

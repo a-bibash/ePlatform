@@ -1,97 +1,62 @@
-{% extends "layouts/full-base.html" %}
 
-{% block title %}Login In{% endblock %}
 
-<!-- Specific Page CSS goes HERE -->
-{% block stylesheets %}
-{{ block.super }}
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f4;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-    }
-    .login-container {
-        background-color: #fff;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        width: 300px;
-        text-align: center;
-    }
-    h2 {
-        margin-bottom: 20px;
-        color: #333;
-    }
-    .form-group {
-        margin-bottom: 15px;
-        text-align: left;
-    }
-    label {
-        display: block;
-        margin-bottom: 5px;
-        color: #555;
-    }
-    input {
-        width: 100%;
-        padding: 8px;
-        box-sizing: border-box;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-    }
-    button {
-        width: 100%;
-        padding: 10px;
-        background-color: #28a745;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-    button:hover {
-        background-color: #218838;
-    }
-    .error-message {
-        color: red;
-        margin-top: 10px;
-    }
-    .register-link {
-        margin-top: 15px;
-        color: #007bff;
-        text-decoration: none;
-    }
-    .register-link:hover {
-        text-decoration: underline;
-    }
-</style>
 
-{% endblock stylesheets %}
+
+{% extends "layouts/base-auth.html" %}
+{% load static %}
+
+{% block title %}Login{% endblock title %}
 
 {% block content %}
-<main>
-    <div class="login-container">
-        <h2>Login</h2>
-        <form method="post" action="{% url 'login' %}">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="username_or_email">Username or Email</label>
-                <input type="text" id="username_or_email" name="username_or_email" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            <button type="submit">Login</button>
-        </form>
-        <a href="{% url 'register' %}" class="register-link">Don't have an account? Register here</a>
-    </div>
-</main>
-{% endblock content %}
 
-{% block javascripts %}
-{{block.super}}
-{% endblock javascripts %}
+  <div class="auth-main">
+    <div class="auth-wrapper v1">
+      <div class="auth-form">
+        <div class="position-relative my-5">
+          <div class="auth-bg">
+            <span class="r"></span>
+            <span class="r s"></span>
+            <span class="r s"></span>
+            <span class="r"></span>
+          </div>
+          <div class="card mb-0">
+            <form method="post" class="card-body">
+              {% csrf_token %}
+
+              <div class="text-center">
+                <a href="{% url "login" %}">
+                  <div>
+                    E-Platform
+                    {% comment %} <img src="{% static "assets/images/logo-dark.svg" %}" alt="img"> {% endcomment %}
+                  </div>
+                </a>
+              </div>
+              <h4 class="text-center f-w-500 mt-4 mb-3">Login</h4>
+
+              {% for field in form %}
+              <div class="form-group mb-3">
+                {{ field }}
+              </div>
+              {% endfor %}
+              <div class="d-flex mt-1 justify-content-between align-items-center">
+                <div class="form-check">
+                  <input class="form-check-input input-primary" type="checkbox" id="customCheckc1" checked="">
+                  <label class="form-check-label text-muted" for="customCheckc1">Remember me?</label>
+                </div>
+                <a href="#" class="text-secondary f-w-400 mb-0">Forgot Password?</a>
+              </div>
+              <div class="text-center mt-4">
+                <button type="submit" class="btn btn-primary shadow px-sm-4">Login</button>
+              </div>
+              <div class="d-flex justify-content-between align-items-end mt-4">
+                <h6 class="f-w-500 mb-0">Don't have an Account?</h6>
+                <a href="{% url "register" %}" class="link-primary">Create Account</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock content %}

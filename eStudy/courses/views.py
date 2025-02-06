@@ -1,31 +1,31 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
-from django.contrib import messages
+
 from django.http import FileResponse
-from django.contrib.auth.decorators import login_required  # Import the decorator
 from .models import *
-from .forms import UserRegistrationForm, UserLoginForm
+
 from django.contrib.auth import get_user_model
-from django.contrib import messages
+
 from django.shortcuts import render, redirect
-from .forms import UserRegistrationForm
+
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from courses.models import Course, Enrollment
 from django.shortcuts import get_object_or_404, redirect, render
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
 from .models import *
 from .utils import generate_presigned_url
 import boto3
 import os
 from dotenv import load_dotenv
-
+from .forms import *
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 
 load_dotenv()
-User = get_user_model()  # Defined once at the top
+User = get_user_model()  
 
 
 # Course Views
@@ -118,8 +118,6 @@ def stream_video(request, video_id):
 
 
 
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 
 @login_required
 @csrf_exempt  # Only use if you’re not sending CSRF tokens from JavaScript
@@ -140,9 +138,6 @@ def track_video_watch(request, video_id):
 
 
 
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
 
 @csrf_exempt  # Allow AJAX requests
 @login_required
@@ -211,9 +206,10 @@ def get_video_size_from_s3(file_key):
         return None
 
 
+
 def register_view(request):
     if request.method == 'POST':
-        form = UserRegistrationForm(request.POST)
+        form = RegistrationForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data.get("email")
 
@@ -223,8 +219,10 @@ def register_view(request):
                 return render(request, 'accounts/register.html', {'form': form})
 
             try:
-                user = form.save(commit=False)  
+                user = form.save(commit=False)
+                user.set_password(form.cleaned_data["password1"])  # Hash the password
                 user.save()
+
                 messages.success(request, 'Registration successful! Please login.')
                 return redirect('login')
 
@@ -233,55 +231,52 @@ def register_view(request):
                 return render(request, 'accounts/register.html', {'form': form})
 
         else:
+            # Show specific field errors
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field.capitalize()}: {error}")
-            return render(request, 'accounts/register.html', {'form': form})
 
     else:
-        form = UserRegistrationForm()
+        form = RegistrationForm()
 
     return render(request, 'accounts/register.html', {'form': form})
 
 
 
 
+
+
+
 def login_view(request):
     if request.method == 'POST':
-        form = UserLoginForm(request.POST)
+        form = LoginForm(request, data=request.POST)
         if form.is_valid():
-            username_or_email = form.cleaned_data['username_or_email']
+            username_or_email = form.cleaned_data['username']
             password = form.cleaned_data['password']
-            
-            user = authenticate(
-                request,
-                username=username_or_email,
-                password=password
-            )
-            
+
+            user = authenticate(request, username=username_or_email, password=password)
+
+            # If authentication fails, check if it's an email
             if user is None and '@' in username_or_email:
                 try:
                     user = User.objects.get(email=username_or_email)
-                    user = authenticate(
-                        request,
-                        username=user.username,
-                        password=password
-                    )
+                    user = authenticate(request, username=user.username, password=password)
                 except User.DoesNotExist:
-                    pass
+                    user = None
 
             if user is not None:
                 login(request, user)
                 if user.is_superuser:
-                        return redirect('adminpanel_home')
+                    return redirect('adminpanel_home')
                 return redirect('dashboard')
-                
-        
-        messages.error(request, 'Invalid credentials')
+
+        messages.error(request, "Invalid details. Please check your credentials.")
+
     else:
-        form = UserLoginForm()
-    
+        form = LoginForm()
+
     return render(request, 'accounts/login.html', {'form': form})
+
 
 
 

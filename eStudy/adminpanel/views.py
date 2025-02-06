@@ -7,7 +7,7 @@ from courses.models import *
 from django.forms import modelform_factory
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now, timedelta
-
+from django.contrib.auth.decorators import login_required
 import pandas as pd
 from django.http import HttpResponse
 from django.utils.timezone import make_naive
@@ -26,11 +26,13 @@ from django.core.files.storage import default_storage
 User = get_user_model() 
 
 
+@login_required  
 def user_list(request):
     users = User.objects.all()
     return render(request, 'adminpanel/user_list.html', {'users': users})
 
 
+@login_required  
 def user_create(request):
     if request.method == 'POST':
         username = request.POST['username']
@@ -43,6 +45,7 @@ def user_create(request):
 
 
 
+@login_required  
 def user_update(request, pk):
     user = get_object_or_404(User, pk=pk) 
 
@@ -58,6 +61,7 @@ def user_update(request, pk):
     return render(request, 'adminpanel/user_form.html', {'user': user})  
 
 
+@login_required  
 def user_delete(request, pk):
     user = get_object_or_404(User, pk=pk)
     user.delete()
@@ -66,6 +70,7 @@ def user_delete(request, pk):
 
 
 
+@login_required  
 def model_list(request, app_label, model_name):
    
     if app_label == 'auth' and model_name == 'user':
@@ -83,6 +88,7 @@ def model_list(request, app_label, model_name):
 
 
 
+@login_required  
 def model_create(request, app_label, model_name):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     ModelForm = modelform_factory(model, fields='__all__')
@@ -102,6 +108,7 @@ def model_create(request, app_label, model_name):
 
 
 
+@login_required  
 def model_update(request, app_label, model_name, pk):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     
@@ -124,6 +131,7 @@ def model_update(request, app_label, model_name, pk):
 
 
 
+@login_required  
 def model_delete(request, app_label, model_name, pk):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     
@@ -135,7 +143,7 @@ def model_delete(request, app_label, model_name, pk):
     return redirect('model_list', app_label=app_label, model_name=model_name)
 
 
-
+@login_required  
 def home(request):
     User = get_user_model()  
     user_model_info = {
@@ -160,7 +168,7 @@ def home(request):
     return render(request, 'adminpanel/home.html', {'models': models})
 
 
-
+@login_required  
 def stats_dashboard_view(request):
 
     total_users = User.objects.count()
@@ -199,7 +207,7 @@ def user_stats_detail(request):
     }
     return render(request, "stats/user_stats_details.html", context)
 
-
+@login_required  
 def export_users_excel(request):
     # Exclude sensitive fields if needed
     excluded_fields = ['password', 'last_login','is_superuser','is_staff']
@@ -239,7 +247,7 @@ def export_users_excel(request):
 
 from django.shortcuts import render
 from courses.models import Course, Enrollment, Video
-
+@login_required  
 def course_stats_detail(request):
     course_data = []
     
@@ -265,7 +273,7 @@ from courses.models import Course, Enrollment
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
-
+@login_required  
 def course_enrollment_details(request, course_title):
     # Get the course object
     course = get_object_or_404(Course, title=course_title)
@@ -292,7 +300,7 @@ def course_enrollment_details(request, course_title):
     return render(request, "stats/course_enrollment_details.html", context)
 
 
-
+@login_required  
 def export_course_users_excel(request, course_title):
     # Get the course object
     course = get_object_or_404(Course, title=course_title)
@@ -334,7 +342,7 @@ CUSTOM_ENDPOINT_URL = os.getenv('CUSTOM_ENDPOINT_URL')
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 BUCKET_NAME = os.getenv('BUCKET_NAME')
-
+@login_required  
 # Generate a pre-signed URL to upload a file to S3
 def upload_presigned_url(bucket_name, file_key):
     try:
@@ -362,6 +370,7 @@ def upload_presigned_url(bucket_name, file_key):
 
 
 @csrf_exempt
+@login_required  
 def upload_video_view(request):
     if request.method == 'POST' and request.FILES.get('video_file'):
         video_file = request.FILES['video_file']

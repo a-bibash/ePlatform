@@ -1,55 +1,56 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
-from django.core.exceptions import ValidationError
-
-
-
+from django.contrib.auth.forms import AuthenticationForm
+from django.utils.translation import gettext_lazy as _
 
 from django.contrib.auth import get_user_model
 
 
-User = get_user_model()  # Defined once at the top
+User = get_user_model()  
 
-class UserRegistrationForm(UserCreationForm):
-    email = forms.EmailField(
-        required=True,
-        help_text="Required. Enter a valid email address.",
-        widget=forms.EmailInput(attrs={'class': 'form-control'})
-    )
+class RegistrationForm(UserCreationForm):
     password1 = forms.CharField(
-        label="Password",
-        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
-        help_text="Your password must contain at least 8 characters."
+        label=_("Password"),
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password'}),
     )
     password2 = forms.CharField(
-        label="Password Confirmation",
-        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
-        help_text="Enter the same password as before, for verification."
+        label=_("Confirm Password"),
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirm Password'}),
     )
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password1', 'password2']
+        fields = ('username', 'email')
+
         widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'username': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Username'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Email'
+            })
         }
 
     def clean_email(self):
+        """Ensure the email is unique."""
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
-            raise ValidationError("This email address is already in use.")
+            raise forms.ValidationError("This email address is already in use.")
         return email
 
-class UserLoginForm(forms.Form):
-    username_or_email = forms.CharField(
-        label="Username or Email",
-        widget=forms.TextInput(attrs={'class': 'form-control'})
+
+
+
+class LoginForm(AuthenticationForm):
+    username = forms.CharField(
+        label=_("Username or Email"),
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Username or Email"})
     )
     password = forms.CharField(
-        widget=forms.PasswordInput(attrs={'class': 'form-control'})
+        label=_("Your Password"),
+        strip=False,
+        widget=forms.PasswordInput(attrs={"class": "form-control", "placeholder": "Password"})
     )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['username_or_email'].widget.attrs.update({'autofocus': 'autofocus'})
