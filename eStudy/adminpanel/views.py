@@ -6,7 +6,7 @@ from courses.models import *
 from django.forms import modelform_factory
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now, timedelta
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required,  user_passes_test
 import pandas as pd
 from django.http import HttpResponse
 from django.utils.timezone import make_naive
@@ -24,43 +24,64 @@ from django.core.files.storage import default_storage
 
 User = get_user_model() 
 
+def superuser_required(User):
+    return User.is_superuser
+
 
 @login_required  
+@user_passes_test(superuser_required)
 def user_list(request):
     users = User.objects.all()
     return render(request, 'adminpanel/user_list.html', {'users': users})
 
 
-@login_required  
+@login_required 
+@user_passes_test(superuser_required) 
 def user_create(request):
     if request.method == 'POST':
         username = request.POST['username']
         email = request.POST['email']
         password = request.POST['password']
-        User.objects.create_user(username=username, email=email, password=password)
+        first_name = request.POST['first_name']
+        last_name = request.POST['last_name']
+        User.objects.create_user(username=username, email=email, password=password,first_name=first_name,last_name=last_name)
         messages.success(request, 'User created successfully.')
         return redirect('user_list')
     return render(request, 'adminpanel/user_form.html')
 
 
-
-@login_required  
+@login_required
+@user_passes_test(superuser_required)
 def user_update(request, pk):
-    user = get_object_or_404(User, pk=pk) 
+    user = get_object_or_404(User, pk=pk)
 
     if request.method == 'POST':
-        user.username = request.POST.get('username', user.username)
-        user.email = request.POST.get('email', user.email)
-        if request.POST.get('password'):  
-            user.set_password(request.POST['password'])
+        username = request.POST['username']
+        email = request.POST['email']
+        first_name = request.POST['first_name']
+        last_name = request.POST['last_name']
+        password = request.POST.get('password')
+
+        user.username = username
+        user.email = email
+        user.first_name = first_name
+        user.last_name = last_name
+
+        if password:
+            user.set_password(password)
+
+        is_active_str = request.POST.get('is_active', 'True')
+        user.is_active = True if is_active_str == 'True' else False
+
         user.save()
         messages.success(request, 'User updated successfully.')
         return redirect('user_list')
 
-    return render(request, 'adminpanel/user_form.html', {'user': user})  
+    return render(request, 'adminpanel/user_form.html', {'user': user})
 
 
 @login_required  
+@user_passes_test(superuser_required)
 def user_delete(request, pk):
     user = get_object_or_404(User, pk=pk)
     user.delete()
@@ -68,8 +89,8 @@ def user_delete(request, pk):
     return redirect('user_list')
 
 
-
 @login_required  
+@user_passes_test(superuser_required)
 def model_list(request, app_label, model_name):
    
     if app_label == 'auth' and model_name == 'user':
@@ -87,7 +108,8 @@ def model_list(request, app_label, model_name):
 
 
 
-@login_required  
+@login_required 
+@user_passes_test(superuser_required) 
 def model_create(request, app_label, model_name):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     ModelForm = modelform_factory(model, fields='__all__')
@@ -104,10 +126,8 @@ def model_create(request, app_label, model_name):
 
 
 
-
-
-
 @login_required  
+@user_passes_test(superuser_required)
 def model_update(request, app_label, model_name, pk):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     
@@ -129,8 +149,8 @@ def model_update(request, app_label, model_name, pk):
 
 
 
-
 @login_required  
+@user_passes_test(superuser_required)
 def model_delete(request, app_label, model_name, pk):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     
@@ -142,7 +162,8 @@ def model_delete(request, app_label, model_name, pk):
     return redirect('model_list', app_label=app_label, model_name=model_name)
 
 
-@login_required  
+@login_required 
+@user_passes_test(superuser_required) 
 def home(request):
     User = get_user_model()  
     user_model_info = {
@@ -167,7 +188,8 @@ def home(request):
     return render(request, 'adminpanel/home.html', {'models': models})
 
 
-@login_required  
+@login_required
+@user_passes_test(superuser_required)  
 def stats_dashboard_view(request):
 
     total_users = User.objects.count()
@@ -199,6 +221,7 @@ def stats_dashboard_view(request):
     return render(request, "stats/stats_dashboard.html", context)
 
 
+
 def user_stats_detail(request):
     users = User.objects.values("first_name", "last_name", "email", "date_joined",'username')
     context = {
@@ -206,32 +229,28 @@ def user_stats_detail(request):
     }
     return render(request, "stats/user_stats_details.html", context)
 
+
 @login_required  
+@user_passes_test(superuser_required)
 def export_users_excel(request):
-    # Exclude sensitive fields if needed
     excluded_fields = ['password', 'last_login','is_superuser','is_staff']
     model_fields = [field.name for field in User._meta.fields if field.name not in excluded_fields]
 
-    # Fetch user data dynamically
     users = list(User.objects.values(*model_fields))
 
-    # Convert timezone-aware datetime fields
     for user in users:
         for field, value in user.items():
             if isinstance(value, (pd.Timestamp,)):
-                user[field] = value.tz_localize(None)  # Remove timezone
-            elif hasattr(value, 'tzinfo'):  # Django datetime fields
-                user[field] = make_naive(value)  # Convert to naive datetime
+                user[field] = value.tz_localize(None) 
+            elif hasattr(value, 'tzinfo'): 
+                user[field] = make_naive(value) 
 
-    # Convert data to DataFrame
     df = pd.DataFrame(users)
 
-    # Format datetime fields properly
     for field in df.columns:
-        if pd.api.types.is_datetime64_any_dtype(df[field]):  # Auto-detect datetime fields
+        if pd.api.types.is_datetime64_any_dtype(df[field]): 
             df[field] = df[field].dt.strftime('%Y-%m-%d %H:%M')
 
-    # Generate Excel response
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = 'attachment; filename="All_users_details.xlsx"'
 
@@ -240,17 +259,11 @@ def export_users_excel(request):
     return response
 
 
-
-
-
-
-from django.shortcuts import render
-from courses.models import Course, Enrollment, Video
 @login_required  
+@user_passes_test(superuser_required)
 def course_stats_detail(request):
     course_data = []
-    
-    # Fetch all courses and calculate required details
+
     courses = Course.objects.all()
     for course in courses:
         total_enrollments = Enrollment.objects.filter(course=course).count()
@@ -267,20 +280,13 @@ def course_stats_detail(request):
 
 
 
-from django.shortcuts import render, get_object_or_404
-from courses.models import Course, Enrollment
-from django.contrib.auth import get_user_model
-
-User = get_user_model()
 @login_required  
+@user_passes_test(superuser_required)
 def course_enrollment_details(request, course_title):
-    # Get the course object
     course = get_object_or_404(Course, title=course_title)
 
-    # Fetch enrolled users using the Enrollment model
     enrollments = Enrollment.objects.filter(course=course).select_related("user")
 
-    # Extract user details dynamically
     enrolled_users = [
         {
             "username": enrollment.user.username,
@@ -299,33 +305,29 @@ def course_enrollment_details(request, course_title):
     return render(request, "stats/course_enrollment_details.html", context)
 
 
-@login_required  
+@login_required
+@user_passes_test(superuser_required)  
 def export_course_users_excel(request, course_title):
-    # Get the course object
     course = get_object_or_404(Course, title=course_title)
 
-    # Fetch enrolled users dynamically
+
     excluded_fields = ['password', 'last_login', 'is_superuser', 'is_staff']
     user_fields = [field.name for field in User._meta.fields if field.name not in excluded_fields]
 
     enrollments = Enrollment.objects.select_related("user").filter(course=course)
     users = [ {field: getattr(enrollment.user, field, None) for field in user_fields} for enrollment in enrollments]
 
-    # Convert timezone-aware datetime fields
     for user in users:
         for field, value in user.items():
-            if hasattr(value, 'tzinfo'):  # Check if it's a timezone-aware datetime
-                user[field] = make_naive(value)  # Convert to naive datetime
+            if hasattr(value, 'tzinfo'):  
+                user[field] = make_naive(value) 
 
-    # Convert data to DataFrame
     df = pd.DataFrame(users)
 
-    # Format datetime fields properly
     for field in df.columns:
         if pd.api.types.is_datetime64_any_dtype(df[field]):
             df[field] = df[field].dt.strftime('%Y-%m-%d %H:%M')
 
-    # Generate Excel response
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = f'attachment; filename="Users_enrolled_on_{course.title}.xlsx"'
 
@@ -368,7 +370,9 @@ def upload_presigned_url(bucket_name, file_key):
 
 
 
+
 @login_required  
+@user_passes_test(superuser_required)
 @csrf_exempt
 def upload_video_view(request):
     if request.method == 'POST' and request.FILES.get('video_file'):

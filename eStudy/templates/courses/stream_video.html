@@ -1,67 +1,59 @@
-{% extends 'layouts/base.html' %}
+{% extends "layouts/base.html" %}
+{% load static %}
 
-{% block title %} {{ video.title }} - Stream Video {% endblock %}
-
-{% block stylesheets %}
-{{ block.super }}
-<style>
-    /* Video Stream Section */
-    .video-stream-section {
-        padding: 40px 20px;
-        background-color: #f9f9f9;
-    }
-    .video-container {
-        max-width: 800px;
-        margin: 0 auto;
-        background-color: white;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        padding: 20px;
-        position: relative;
-    }
-    .video-details {
-        margin-top: 20px;
-    }
-    .messages {
-        margin-bottom: 20px;
-        padding: 10px;
-        border-radius: 5px;
-        background-color: #f8d7da;
-        color: #721c24;
-    }
-    .success-message {
-        background-color: #d4edda;
-        color: #155724;
-    }
-    .back-link {
-        display: inline-block;
-        margin-top: 20px;
-        padding: 10px 15px;
-        background-color: #007bff;
-        color: white;
-        text-decoration: none;
-        border-radius: 5px;
-    }
-    .back-link:hover {
-        background-color: #0056b3;
-    }
-
-    /* Watermark Styles */
-    .watermark {
-        position: absolute;
-        top: 30px;
-        left: 30px;
-        font-size: 14px;
-        color: rgba(255, 255, 255, 0.8);
-        padding: 5px 10px;
-        border-radius: 5px;
-        pointer-events: none;
-        z-index: 10;
-    }
-</style>
-{% endblock stylesheets %}
+{% block title %}Video Stream{% endblock title %}
 
 {% block content %}
+<div class="pc-container">
+    <div class="pc-content">
+        <!-- Breadcrumb Navigation -->
+        <div class="page-header">
+            <div class="page-block">
+                <div class="row align-items-center">
+                    <div class="col-md-12">
+                        <div class="page-header-title">
+                            <h5 class="mb-0">{{ video.title }}</h5>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <ul class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'course_videos' course.id %}">{{ course.title }}</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">{{ video.title }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Video Stream Section -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="video-details mb-3 text-left">
+                    <h6>Remaining Views: <span id="remainingViews">{{ access.access_count }}</span></h6>
+                    <h6>Playtime Left: <span id="playtimeLeft">{{ access.playtime_left }} mins</span></h6>
+                </div>
+                <div class="video-container" id="videoContainer" style="position: relative; padding-top: 56.25%; height: 0; overflow: hidden; max-width: 100%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+                    <!-- Video.js Player -->
+                    <video id="videoPlayer" class="video-js vjs-default-skin" controls style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" controlsList="nodownload" oncontextmenu="return false;">
+                        <source src="{{ presigned_url }}" type="video/mp4">
+                        Your browser does not support the video.
+                    </video>
+                    <div class="watermark" style="position: absolute; top: 10px; left: 10px; color: rgba(255, 255, 255, 0.7); font-size: 14px;">Your Watermark Text</div>
+                </div>
+                <a href="{% url 'course_videos' video.course.id %}" class="btn btn-secondary mt-3">&larr; Back to Course</a>
+                {% if access.playtime_left <= 0 %}
+                <p class="text-center mt-3" style="font-size: 18px; color: #666;">
+                    {% if access.access_count > 0 %}
+                        You have no remaining playback time for this video.
+                    {% else %}
+                        You have no remaining views for this video.
+                    {% endif %}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Video.js CSS -->
 <link href="https://vjs.zencdn.net/8.3.0/video-js.css" rel="stylesheet">
@@ -69,43 +61,7 @@
 <!-- Video.js JavaScript -->
 <script src="https://vjs.zencdn.net/8.3.0/video.min.js"></script>
 
-<!-- Video Stream Section -->
-<div class="video-stream-section">
-    <div class="container">
-        <h1>{{ video.title }}</h1>
-        <p>Remaining Views: <span id="remainingViews">{{ access.access_count }}</span></p>
-        <p>Playtime Left: <span id="playtimeLeft">{{ access.playtime_left }} mins</span></p>
-
-        {% if access.playtime_left > 0 %}
-        <div class="video-container" id="videoContainer">
-            <!-- Video.js Player -->
-            <video id="videoPlayer" class="video-js vjs-default-skin" controls width="800" height="450" controlsList="nodownload" oncontextmenu="return false;">
-                <source src="{{ presigned_url }}" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-            <div class="watermark">Your Watermark Text</div>
-
-            <!-- Video Details -->
-            <div class="video-details">
-                <h2>Video Details</h2>
-                <p>{{ video.title }}</p>
-            </div>
-            <!-- Back to Course Link -->
-            <a href="{% url 'course_videos' video.course.id %}" class="back-link">&larr; Back to Course</a>
-        </div>
-        {% else %}
-        <p style="text-align: center; font-size: 18px; color: #666;">
-            {% if access.access_count > 0 %}
-                You have no remaining playback time for this video.
-            {% else %}
-                You have no remaining views for this video.
-            {% endif %}
-        </p>
-        {% endif %}
-    </div>
-</div>
-
-<!-- CSRF Token -->
+<!-- CSRF Token and Playback Tracking -->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         var csrftoken = "{{ csrf_token }}";
@@ -120,6 +76,7 @@
         let watchTime = 0;
         let updateInterval = 60;
         let watching = false;
+        let playtimeLeft = null;  // Track playtime left to avoid unnecessary fetches
 
         player.on('play', function () {
             if (!hasStarted) {
@@ -140,7 +97,15 @@
                 })
                 .catch(error => console.error("Error updating view count:", error));
             }
-            watching = true; 
+
+            // Immediately pause if playtimeLeft is already zero
+            if (playtimeLeft === 0) {
+                player.pause();
+                player.controls(false);
+                document.getElementById("videoContainer").style.display = "none";
+            } else {
+                watching = true;
+            }
         });
 
         player.on('pause', function () {
@@ -148,7 +113,7 @@
         });
 
         setInterval(function () {
-            if (watching) {
+            if (watching && playtimeLeft !== 0) {  // Prevent unnecessary updates if playtime is already 0
                 watchTime += updateInterval;
                 fetch("{% url 'update_playtime' video.id %}", {
                     method: "POST",
@@ -163,22 +128,23 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.playtime_left !== undefined) {
+                        playtimeLeft = data.playtime_left;
+
                         let playtimeLeftEl = document.getElementById("playtimeLeft");
                         if (playtimeLeftEl) {
-                            playtimeLeftEl.innerText = data.playtime_left + " mins left";
+                            playtimeLeftEl.innerText = playtimeLeft + " mins left";
                         }
 
-                        if (data.playtime_left <= 0) {
+                        if (playtimeLeft <= 0) {
                             player.pause();
-                            player.controls(false); 
-                            document.getElementById("videoContainer").style.display = "none"; 
-                            document.getElementById("noPlaytimeMessage").style.display = "block"; 
+                            player.controls(false);
+                            document.getElementById("videoContainer").style.display = "none";
                         }
                     }
                 })
                 .catch(error => console.error("Error updating playtime:", error));
 
-                watchTime = 0; 
+                watchTime = 0;
             }
         }, updateInterval * 1000);
     });

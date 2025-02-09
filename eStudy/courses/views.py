@@ -25,10 +25,10 @@ import json
 
 
 load_dotenv()
-User = get_user_model()  
+User = get_user_model() 
 
+BUCKET_NAME = os.getenv('BUCKET_NAME')
 
-# Course Views
 
 def home(request):
     courses = Course.objects.all()
@@ -40,7 +40,6 @@ def course_videos(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     user = request.user
 
-    # Check if the user is enrolled
     is_enrolled = Enrollment.objects.filter(user=user, course=course).exists()
     
     videos = Video.objects.filter(course=course)
@@ -54,73 +53,36 @@ def course_videos(request, course_id):
 
 
 @login_required
-def enroll_course(request, course_id):
-    course = get_object_or_404(Course, id=course_id)
-    user = request.user
-
-    # Check if the user is already enrolled
-    if Enrollment.objects.filter(user=user, course=course).exists():
-        messages.info(request, "You are already enrolled in this course.")
-    else:
-        Enrollment.objects.create(user=user, course=course)
-        messages.success(request, f"You have successfully enrolled in {course.title}!")
-
-    return redirect('course_videos', course_id=course.id)
-
-
-
-@login_required
 def stream_video(request, video_id):
-    # Fetch the video object, or raise a 404 if it doesn't exist
     video = get_object_or_404(Video, id=video_id)
-    
-    # Track video views (but don't decrement yet)
-    access, created = UserVideoAccess.objects.get_or_create(
+    course = video.course  
+
+    access, _ = UserVideoAccess.objects.get_or_create(
         user=request.user, 
         video=video,
         defaults={'playtime_left': int(video.playtime * 1.5)} 
     )
 
-    # Check if the user has access to the video
     if access.playtime_left <= 0 or access.access_count <= 0:
-        messages.error(request, 'You have no remaining views or playback time for this video.')
-        return redirect('course_videos', course_id=video.course.id)
+        messages.error(request, 'You have no remaining views or playback time for this video. Please contact admin.')
+        return redirect('course_videos', course_id=course.id)
 
-
-    # Get the video size and calculate the chunk range
-    video_size = get_video_size_from_s3(video.s3_file_key)
-
-    if not video_size:
-        messages.error(request, "Error: Unable to fetch video size.")
-        return redirect('course_videos', course_id=video.course.id)
-
-    # Default to entire video URL if no specific byte range is requested
-    range_start = request.GET.get('start', 0)
-    range_end = request.GET.get('end', video_size)
-
-    # Get the pre-signed URL for the chunk range
-    presigned_url = generate_presigned_url('study-material', video.s3_file_key, range_start, range_end)
-
+    presigned_url = generate_presigned_url(BUCKET_NAME, video.s3_file_key)
     if not presigned_url:
-        messages.error(request, "Error: Unable to generate a pre-signed URL for the video.")
-        return redirect('course_videos', course_id=video.course.id)
+        messages.error(request, "Unable to generate a pre-signed URL for the video.")
+        return redirect('course_videos', course_id=course.id)
 
-    # Render the template with the video and access context
-    context = {
+    return render(request, 'courses/stream_video.html', {
         'video': video,
         'access': access,
         'presigned_url': presigned_url,
-        'video_size': video_size,
-    }
-    
-    return render(request, 'courses/stream_video.html', context)
-
-
+        'course': course,
+    })
 
 
 
 @login_required
-@csrf_exempt  # Only use if you’re not sending CSRF tokens from JavaScript
+@csrf_exempt
 def track_video_watch(request, video_id):
     """Decrements the access count when the user starts watching."""
     video = get_object_or_404(Video, id=video_id)
@@ -139,7 +101,7 @@ def track_video_watch(request, video_id):
 
 
 
-@csrf_exempt  # Allow AJAX requests
+@csrf_exempt
 @login_required
 def update_playtime(request, video_id):
     if request.method == "POST":
@@ -154,10 +116,7 @@ def update_playtime(request, video_id):
                 defaults={'playtime_left': video.playtime}
             )
 
-            # Convert watched seconds to minutes (rounding up)
-            watched_minutes = -(-watched_seconds // 60)  # Equivalent to math.ceil()
-
-            # Decrease playtime_left but never below zero
+            watched_minutes = -(-watched_seconds // 60)  
             access.playtime_left = max(0, access.playtime_left - watched_minutes)
             access.save()
 
@@ -170,80 +129,58 @@ def update_playtime(request, video_id):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 def get_video_size_from_s3(file_key):
-    """
-    Helper function to get the size of the video from S3
-    """
-    # Fetch AWS credentials from environment variables
+
     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
     CUSTOM_ENDPOINT_URL = os.getenv('CUSTOM_ENDPOINT_URL')
     try:
-        # Get the file size from S3 using the head_object API
         s3_client = boto3.client(
             's3',
             aws_access_key_id=AWS_ACCESS_KEY_ID,
             aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
             endpoint_url=CUSTOM_ENDPOINT_URL
         )
-        response = s3_client.head_object(Bucket='study-material', Key=file_key)
-        return response['ContentLength']  # Returns size in bytes
+        response = s3_client.head_object(Bucket=BUCKET_NAME, Key=file_key)
+        return response['ContentLength'] 
     except Exception as e:
         print(f"Error fetching video size: {e}")
         return None
 
 
 
-def register_view(request):
-    if request.method == 'POST':
-        form = RegistrationForm(request.POST)
-        if form.is_valid():
-            email = form.cleaned_data.get("email")
+# def register_view(request):
+#     if request.method == 'POST':
+#         form = RegistrationForm(request.POST)
+#         if form.is_valid():
+#             email = form.cleaned_data.get("email")
 
-            # Check if email already exists
-            if User.objects.filter(email=email).exists():
-                messages.warning(request, "This email is already in use. Please use a different email.")
-                return render(request, 'accounts/register.html', {'form': form})
+#             if User.objects.filter(email=email).exists():
+#                 messages.warning(request, "This email is already in use. Please use a different email.")
+#                 return render(request, 'accounts/register.html', {'form': form})
 
-            try:
-                user = form.save(commit=False)
-                user.set_password(form.cleaned_data["password1"])  # Hash the password
-                user.save()
+#             try:
+#                 user = form.save(commit=False)
+#                 user.set_password(form.cleaned_data["password1"])  # Hash the password
+#                 user.save()
 
-                messages.success(request, 'Registration successful! Please login.')
-                return redirect('login')
+#                 messages.success(request, 'Registration successful! Please login.')
+#                 return redirect('login')
 
-            except Exception as e:
-                messages.error(request, f"An unexpected error occurred: {str(e)}")
-                return render(request, 'accounts/register.html', {'form': form})
+#             except Exception as e:
+#                 messages.error(request, f"An unexpected error occurred: {str(e)}")
+#                 return render(request, 'accounts/register.html', {'form': form})
 
-        else:
-            # Show specific field errors
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{field.capitalize()}: {error}")
+#         else:
+#             # Show specific field errors
+#             for field, errors in form.errors.items():
+#                 for error in errors:
+#                     messages.error(request, f"{field.capitalize()}: {error}")
 
-    else:
-        form = RegistrationForm()
+#     else:
+#         form = RegistrationForm()
 
-    return render(request, 'accounts/register.html', {'form': form})
-
-
-
-
+#     return render(request, 'accounts/register.html', {'form': form})
 
 
 
@@ -255,8 +192,6 @@ def login_view(request):
             password = form.cleaned_data['password']
 
             user = authenticate(request, username=username_or_email, password=password)
-
-            # If authentication fails, check if it's an email
             if user is None and '@' in username_or_email:
                 try:
                     user = User.objects.get(email=username_or_email)
@@ -278,24 +213,11 @@ def login_view(request):
     return render(request, 'accounts/login.html', {'form': form})
 
 
-
-
-
-
 def logout_view(request):
     logout(request)
-    return redirect('home')
+    return redirect('login')
 
-@login_required  # Add this decorator
+@login_required  
 def dashboard(request):
-    courses = Course.objects.all()
-    return render(request, 'home/dashboard.html', {'courses': courses})
-
-
-
-
-
-@login_required
-def courses_page(request):
-    courses = Course.objects.all()  # Fetch all courses from the database
-    return render(request, 'courses/courses.html', {'courses': courses})
+    enrolled_courses = Course.objects.filter(enrollments__user=request.user)
+    return render(request, 'home/dashboard.html', {'courses': enrolled_courses})

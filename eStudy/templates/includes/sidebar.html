@@ -1,10 +1,10 @@
-{% load i18n static admin_datta %}
+{% load static %}
 
 
 <nav class="pc-sidebar">
   <div class="navbar-wrapper">
     <div class="m-header">
-      <a href="{% url "index" %}" class="b-brand text-primary">
+      <a href="{% url "dashboard" %}" class="b-brand text-primary">
         <!-- ========   Change your logo from here   ============ -->
         <img src="{% static 'assets/images/logo-white.svg' %}" class="img-fluid" alt="logo">
       </a>
@@ -14,7 +14,7 @@
       <ul class="pc-navbar">
       {% if request.user.is_superuser %}  
 
-        {% admin_get_menu as app_list %}
+        {% comment %} {% admin_get_menu as app_list %} {% endcomment %}
         {% if app_list %}
           <li class="pc-item pc-caption">
             <label>Admin</label>
@@ -52,34 +52,42 @@
       {% else %}
 
         <li class="pc-item pc-caption">
-          <label>Navigation</label>
+          {% comment %} <label>Navigation</label> {% endcomment %}
         </li>
         <li class="pc-item">
-          <a href="{% url "index" %}" class="pc-link">
+          <a href="{% url "dashboard" %}" class="pc-link">
             <span class="pc-micon">
               <i data-feather="home"></i>
             </span>
             <span class="pc-mtext">Dashboard</span>
           </a>
         </li>
-        <li class="pc-item pc-caption">
+        <li class="pc-item">
+          <a href="{% url "dashboard" %}" class="pc-link">
+            <span class="pc-micon">
+              <i data-feather="settings"></i>
+            </span>
+            <span class="pc-mtext">Settings</span>
+          </a>
+        </li>
+        {% comment %} <li class="pc-item pc-caption">
           <label>UI Components</label>
           <i data-feather="feather"></i>
         </li>
         <li class="pc-item">
-          <a href="{% url "color" %}" class="pc-link">
+          <a href="{% url "dashboard" %}" class="pc-link">
             <span class="pc-micon"><i data-feather="droplet"></i></span>
             <span class="pc-mtext">Color</span>
           </a>
         </li>
         <li class="pc-item">
-          <a href="{% url "typography" %}" class="pc-link">
+          <a href="{% url "dashboard" %}" class="pc-link">
             <span class="pc-micon"><i data-feather="type"></i></span>
             <span class="pc-mtext">Typography</span>
           </a>
         </li>
         <li class="pc-item">
-          <a href="{% url "icon_feather" %}" class="pc-link">
+          <a href="{% url "dashboard" %}" class="pc-link">
             <span class="pc-micon"><i data-feather="feather"></i></span>
             <span class="pc-mtext">Icons</span>
           </a>
@@ -87,7 +95,7 @@
         <li class="pc-item pc-caption">
           <label>Pages</label>
           <i data-feather="monitor"></i>
-        </li> 
+        </li>  {% endcomment %}
         {% if not request.user.is_authenticated %}
         <li class="pc-item">
           <a href="{% url "login" %}" class="pc-link">
@@ -113,7 +121,7 @@
           </a>
         </li>
         {% endif %}
-        <li class="pc-item pc-caption">
+        {% comment %} <li class="pc-item pc-caption">
           <label>Other</label>
           <i data-feather="sidebar"></i>
         </li>
@@ -166,15 +174,15 @@
           </ul>
         </li>
         <li class="pc-item">
-          <a href="{% url "sample_page" %}" class="pc-link">
+          <a href="{% url "dashboard" %}" class="pc-link">
             <span class="pc-micon"><i data-feather="sidebar"></i></span>
             <span class="pc-mtext">Sample page</span>
           </a>
-        </li>
+        </li> {% endcomment %}
       
       {% endif %}  
       </ul>
-      <div class="card pc-user-card my-3 bg-white bg-opacity-10">
+      {% comment %} <div class="card pc-user-card my-3 bg-white bg-opacity-10">
         <div class="card-body text-center">
           <img src="{% static "assets/images/application/img-coupon.png" %}" alt="img" class="img-fluid w-50">
           <h5 class="mb-0 text-white mt-1">Datta Able</h5>
@@ -185,7 +193,7 @@
             Upgrade to PRO
           </a>
         </div>
-      </div>
+      </div> {% endcomment %}
     </div>
   </div>
 </nav>

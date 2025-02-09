@@ -16,7 +16,7 @@
               <i data-feather="menu"></i>
             </a>
           </li>
-          <li class="dropdown pc-h-item">
+          {% comment %} <li class="dropdown pc-h-item">
             <a
               class="pc-head-link dropdown-toggle arrow-none m-0 trig-drp-search"
               data-bs-toggle="dropdown"
@@ -32,13 +32,13 @@
                 <input type="search" class="form-control border-0 shadow-none" placeholder="Search here. . ." />
               </form>
             </div>
-          </li>
+          </li> {% endcomment %}
         </ul>
       </div>
       <!-- [Mobile Media Block end] -->
       <div class="ms-auto">
         <ul class="list-unstyled">
-          <li class="dropdown pc-h-item">
+          {% comment %} <li class="dropdown pc-h-item">
             <a
               class="pc-head-link dropdown-toggle arrow-none me-0"
               data-bs-toggle="dropdown"
@@ -144,7 +144,7 @@
                 <a href="#!" class="link-danger">Clear all Notifications</a>
               </div>
             </div>
-          </li>
+          </li> {% endcomment %}
           <li class="dropdown pc-h-item header-user-profile">
             <a
               class="pc-head-link dropdown-toggle arrow-none me-0"
@@ -179,22 +179,22 @@
                       <span>Settings</span>
                     </span>
                   </a>
-                  <a href="#" class="dropdown-item">
+                  {% comment %} <a href="#" class="dropdown-item">
                     <span>
                       <svg class="pc-icon text-muted me-2">
                         <use xlink:href="#custom-share-bold"></use>
                       </svg>
                       <span>Share</span>
                     </span>
-                  </a>
-                  <a href="#" class="dropdown-item">
+                  </a> {% endcomment %}
+                  {% comment %} <a href="#" class="dropdown-item">
                     <span>
                       <svg class="pc-icon text-muted me-2">
                         <use xlink:href="#custom-lock-outline"></use>
                       </svg>
                       <span>Change Password</span>
                     </span>
-                  </a>
+                  </a> {% endcomment %}
                   <div class="d-grid my-2">
                     {% if request.user.is_authenticated %}
                     <a href="{% url "logout" %}" class="btn btn-primary">

@@ -1,128 +1,74 @@
-{% extends 'layouts/base.html' %}  <!-- Extend your base.html -->
+{% extends "layouts/base.html" %}
+{% load static %}
 
-{% block title %} Home Page {% endblock %}
-
-{% block stylesheets %}
-{{ block.super }}  <!-- Include parent styles if needed -->
-<style>
-    /* Hero Section */
-    .hero {
-        background: linear-gradient(135deg, #007bff, #00bfff);
-        color: white;
-        padding: 100px 20px;
-        text-align: center;
-    }
-
-    .hero h1 {
-        font-size: 48px;
-        margin-bottom: 20px;
-    }
-
-    .hero p {
-        font-size: 20px;
-        margin-bottom: 40px;
-    }
-
-    .hero .btn {
-        background-color: #28a745;
-        color: white;
-        padding: 12px 24px;
-        border-radius: 5px;
-        font-size: 18px;
-        transition: background-color 0.3s ease;
-    }
-
-    .hero .btn:hover {
-        background-color: #218838;
-    }
-
-    /* Course Section */
-    .courses {
-        padding: 50px 20px;
-        text-align: center;
-    }
-
-    .courses h2 {
-        font-size: 36px;
-        margin-bottom: 40px;
-    }
-
-    .course-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 20px;
-    }
-
-    .course-card {
-        background-color: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-        transition: transform 0.3s ease;
-    }
-
-    .course-card:hover {
-        transform: translateY(-10px);
-    }
-
-    .course-card img {
-        width: 100%;
-        height: 180px;
-        object-fit: cover;
-    }
-
-    .course-card .info {
-        padding: 20px;
-    }
-
-    .course-card h3 {
-        font-size: 24px;
-        margin-bottom: 10px;
-    }
-
-    .course-card p {
-        font-size: 16px;
-        color: #666;
-    }
-
-    .course-card .btn {
-        display: inline-block;
-        background-color: #007bff;
-        color: white;
-        padding: 10px 20px;
-        border-radius: 5px;
-        margin-top: 15px;
-        transition: background-color 0.3s ease;
-    }
-
-    .course-card .btn:hover {
-        background-color: #0056b3;
-    }
-</style>
-{% endblock stylesheets %}
+{% block title %}Dashboard{% endblock title %}
 
 {% block content %}
-<!-- Hero Section -->
-<div class="hero">
-    <h1>Welcome to E-Learning Platform</h1>
-    <p>Learn new skills, advance your career, and achieve your goals with our expert-led courses.</p>
-    <a href="{% url 'courses_page' %}" class="btn">Explore Courses</a>
-</div>
 
-<!-- Course Section -->
-<div class="courses" id="courses">
-    <h2>Featured Courses</h2>
-    <div class="course-grid">
-        {% for course in courses %}
-        <div class="course-card">
-            <img src="https://via.placeholder.com/300x180" alt="{{ course.title }}">
-            <div class="info">
-                <h3>{{ course.title }}</h3>
-                <p>{{ course.description }}</p>
-                <a href="{% url 'course_videos' course.id %}" class="btn">View Course</a>
+  <div class="pc-container">
+    <div class="pc-content">
+      <!-- [ breadcrumb ] start -->
+      <div class="page-header">
+        <div class="page-block">
+          <div class="row align-items-center">
+            <div class="col-md-12">
+              <div class="page-header-title">
+                <h5 class="mb-0">Home</h5>
+              </div>
+            </div>
+            <div class="col-md-12">
+              <ul class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url "dashboard" %}">Dashboard</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- [ breadcrumb ] end -->
+      <!-- [ Main Content ] start -->
+      <div class="row">
+        
+
+        <!-- [ Course Section ] start -->
+        <div class="col-md-12">
+            <h2 class="mb-4">Your Courses</h2>
+            <div class="row">
+                {% for course in courses %}
+                <div class="col-md-6 col-xl-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="mb-3">{{ course.title }}</h6>
+                            <div class="row d-flex align-items-center">
+                                <div class="col-12">
+                                    <img src="{% static 'assets/images/user/avatar-7.jpg' %}" alt="{{ course.title }}" class="img-fluid rounded">
+                                </div>
+                                <div class="col-12 mt-3">
+                                    <p class="m-b-0">{{ course.description }}</p>
+                                </div>
+                            </div>
+                            {% comment %} <div class="progress m-t-20" style="height: 7px;">
+                                <div class="progress-bar bg-brand-color-2" role="progressbar" style="width: 50%;" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div> {% endcomment %}
+                            <a href="{% url 'course_videos' course.id %}" class="btn btn-primary mt-3 w-100">View Course</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
         </div>
-        {% endfor %}
+        <!-- [ Course Section ] end -->
     </div>
-</div>
-{% endblock %}
+      <!-- [ Main Content ] end -->
+    </div>
+  </div>
+
+{% endblock content %}
+
+{% block extra_js %}
+
+<script src="{% static "assets/js/plugins/apexcharts.min.js" %}"></script>
+<script src="{% static "assets/js/plugins/jsvectormap.min.js" %}"></script>
+<script src="{% static "assets/js/plugins/world.js" %}"></script>
+<script src="{% static "assets/js/pages/dashboard-default.js" %}"></script>
+
+{% endblock extra_js %}

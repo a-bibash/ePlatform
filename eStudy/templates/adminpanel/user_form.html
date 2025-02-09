@@ -15,22 +15,45 @@
     <div class="form-group">
         <label for="username">Username</label>
         <input type="text" class="form-control" id="username" name="username" 
-               value="{% if '/update/' in request.path %}{{ user.username}}{% else %}{% endif %}" required>
+               value="{% if '/update/' in request.path %}{{ user.username }}{% else %}{% endif %}" required>
+    </div>
+
+    <div class="form-group">
+        <label for="first_name">First Name</label>
+        <input type="text" class="form-control" id="first_name" name="first_name" 
+               value="{% if '/update/' in request.path %}{{ user.first_name }}{% else %}{% endif %}" required>
+    </div>
+
+    <div class="form-group">
+        <label for="last_name">Last Name</label>
+        <input type="text" class="form-control" id="last_name" name="last_name" 
+               value="{% if '/update/' in request.path %}{{ user.last_name }}{% else %}{% endif %}" required>
     </div>
 
     <div class="form-group">
         <label for="email">Email</label>
         <input type="email" class="form-control" id="email" name="email" 
-               value="{% if '/update/' in request.path %}{{ user.email}}{% else %}{% endif %}" required>
+               value="{% if '/update/' in request.path %}{{ user.email }}{% else %}{% endif %}" required>
     </div>
 
     <div class="form-group">
         <label for="password">Password</label>
-        <input type="password" class="form-control" id="password" name="password" {% if not form.instance.pk %}required{% endif %}>
         {% if '/update/' in request.path %}
+            <input type="password" class="form-control" id="password" name="password">
             <small class="text-muted">Leave blank to keep the current password.</small>
+        {% else %}
+            <input type="password" class="form-control" id="password" name="password" required>
         {% endif %}
     </div>
+
+    <div class="form-group">
+        <label for="is_active">Active Status</label>
+        <select class="form-control" id="is_active" name="is_active" required>
+            <option value="True" {% if user.is_active %}selected{% endif %}>Active</option>
+            <option value="False" {% if not user.is_active %}selected{% endif %}>Inactive</option>
+        </select>
+    </div>
+    
 
     <button type="submit" class="btn btn-primary">
         {% if '/update/' in request.path %}Update{% else %}Create{% endif %}
