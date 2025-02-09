@@ -146,10 +146,10 @@
             </div>
           </li> {% endcomment %}
           <li class="dropdown pc-h-item header-user-profile">
+            <h6 class="text mb-1">Hello, {{user.username}}</h6>
             <a
               class="pc-head-link dropdown-toggle arrow-none me-0"
               data-bs-toggle="dropdown"
-              href="#"
               role="button"
               aria-haspopup="false"
               data-bs-auto-close="outside"
@@ -160,18 +160,15 @@
             <div class="dropdown-menu dropdown-user-profile dropdown-menu-end pc-h-dropdown p-0 overflow-hidden">
               <div class="dropdown-header d-flex align-items-center justify-content-between bg-primary">
                 <div class="d-flex my-2">
-                  <div class="flex-shrink-0">
-                    <img src="{% static "assets/images/user/avatar-2.jpg" %}" alt="user-image" class="user-avtar wid-35" />
-                  </div>
                   <div class="flex-grow-1 ms-3">
-                    <h6 class="text-white mb-1">Carson Darrin 🖖</h6>
-                    <span class="text-white text-opacity-75">carson.darrin@company.io</span>
+                    <h6 class="text-white mb-1">{{user.first_name}}  {{user.last_name}}</h6>
+                    <span class="text-white text-opacity-75">{{user.email}}</span>
                   </div>
                 </div>
               </div>
               <div class="dropdown-body">
                 <div class="profile-notification-scroll position-relative" style="max-height: calc(100vh - 225px)">
-                  <a href="#" class="dropdown-item">
+                  <a href="{%url 'user_settings'%}" class="dropdown-item">
                     <span>
                       <svg class="pc-icon text-muted me-2">
                         <use xlink:href="#custom-setting-outline"></use>

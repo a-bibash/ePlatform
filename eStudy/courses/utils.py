@@ -24,10 +24,8 @@ def generate_presigned_url(bucket_name, file_key):
             playtime_minutes = video.playtime
         except Video.DoesNotExist:
             return None
-        print(f'playtime :{playtime_minutes}')
 
         adjusted_expiration = int(playtime_minutes * 60 * 1.5)
-        print(adjusted_expiration)
 
         presigned_url = s3_client.generate_presigned_url(
             'get_object',

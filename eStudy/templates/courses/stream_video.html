@@ -38,7 +38,10 @@
                         <source src="{{ presigned_url }}" type="video/mp4">
                         Your browser does not support the video.
                     </video>
-                    <div class="watermark" style="position: absolute; top: 10px; left: 10px; color: rgba(255, 255, 255, 0.7); font-size: 14px;">Your Watermark Text</div>
+                    <!-- Dynamic Watermark -->
+                    <div class="watermark" id="watermark">
+                        {{ request.user.username }} | {{ request.user.email }}
+                    </div>
                 </div>
                 <a href="{% url 'course_videos' video.course.id %}" class="btn btn-secondary mt-3">&larr; Back to Course</a>
                 {% if access.playtime_left <= 0 %}
@@ -61,93 +64,108 @@
 <!-- Video.js JavaScript -->
 <script src="https://vjs.zencdn.net/8.3.0/video.min.js"></script>
 
+<!-- Dynamic Watermark CSS -->
+
+<style>
+    .watermark {
+        position: absolute;
+        color: rgba(255, 255, 255, 0.1); 
+        font-size: 8px;
+        pointer-events: none;
+        z-index: 9999;
+    }
+
+    /* Ensure watermark stays visible in fullscreen */
+    .vjs-fullscreen .watermark {
+        position: absolute;
+    }
+</style>
+
 <!-- CSRF Token and Playback Tracking -->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        var csrftoken = "{{ csrf_token }}";
+        const csrftoken = "{{ csrf_token }}";
+        const player = videojs('videoPlayer', { controls: true, autoplay: false, preload: 'auto' });
+        const watermark = document.getElementById("watermark");
+        const videoContainer = document.querySelector("#videoContainer");
 
-        var player = videojs('videoPlayer', {
-            controls: true,
-            autoplay: false,
-            preload: 'auto'
-        });
+        let hasStarted = false, watchTime = 0, updateInterval = 60, watching = false, playtimeLeft = null;
 
-        let hasStarted = false;
-        let watchTime = 0;
-        let updateInterval = 60;
-        let watching = false;
-        let playtimeLeft = null;  // Track playtime left to avoid unnecessary fetches
-
-        player.on('play', function () {
+        player.on('play', () => {
             if (!hasStarted) {
                 hasStarted = true;
                 fetch("{% url 'track_video_watch' video.id %}", {
                     method: "POST",
-                    headers: {
-                        "X-CSRFToken": csrftoken,
-                        "Content-Type": "application/json"
-                    },
+                    headers: { "X-CSRFToken": csrftoken, "Content-Type": "application/json" },
                     body: JSON.stringify({})
-                })
-                .then(response => response.json())
-                .then(data => {
+                }).then(response => response.json())
+                .then(data => { 
                     if (data.remaining_views !== undefined) {
                         document.getElementById("remainingViews").innerText = data.remaining_views;
                     }
-                })
-                .catch(error => console.error("Error updating view count:", error));
+                }).catch(error => console.error("Error updating view count:", error));
             }
 
-            // Immediately pause if playtimeLeft is already zero
             if (playtimeLeft === 0) {
                 player.pause();
                 player.controls(false);
                 document.getElementById("videoContainer").style.display = "none";
-            } else {
-                watching = true;
-            }
+            } else watching = true;
         });
 
-        player.on('pause', function () {
-            watching = false;
-        });
+        player.on('pause', () => watching = false);
 
-        setInterval(function () {
-            if (watching && playtimeLeft !== 0) {  // Prevent unnecessary updates if playtime is already 0
+        setInterval(() => {
+            if (watching && playtimeLeft !== 0) {
                 watchTime += updateInterval;
                 fetch("{% url 'update_playtime' video.id %}", {
                     method: "POST",
-                    headers: {
-                        "X-CSRFToken": csrftoken,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        watched_seconds: watchTime
-                    })
-                })
-                .then(response => response.json())
+                    headers: { "X-CSRFToken": csrftoken, "Content-Type": "application/json" },
+                    body: JSON.stringify({ watched_seconds: watchTime })
+                }).then(response => response.json())
                 .then(data => {
                     if (data.playtime_left !== undefined) {
                         playtimeLeft = data.playtime_left;
-
-                        let playtimeLeftEl = document.getElementById("playtimeLeft");
-                        if (playtimeLeftEl) {
-                            playtimeLeftEl.innerText = playtimeLeft + " mins left";
-                        }
-
+                        document.getElementById("playtimeLeft").innerText = `${playtimeLeft} mins left`;
                         if (playtimeLeft <= 0) {
                             player.pause();
                             player.controls(false);
                             document.getElementById("videoContainer").style.display = "none";
                         }
                     }
-                })
-                .catch(error => console.error("Error updating playtime:", error));
-
+                }).catch(error => console.error("Error updating playtime:", error));
                 watchTime = 0;
             }
         }, updateInterval * 1000);
+
+        // Dynamic Watermark Placement
+        function repositionWatermark() {
+            const containerWidth = videoContainer.offsetWidth;
+            const containerHeight = videoContainer.offsetHeight;
+            const watermarkWidth = watermark.offsetWidth;
+            const watermarkHeight = watermark.offsetHeight;
+
+            const randomX = Math.random() * (containerWidth - watermarkWidth);
+            const randomY = Math.random() * (containerHeight - watermarkHeight);
+
+            watermark.style.left = `${randomX}px`;
+            watermark.style.top = `${randomY}px`;
+        }
+
+        setInterval(repositionWatermark, 10000);
+        repositionWatermark(); // Initial placement
+
+        // Handle Fullscreen Watermark
+        player.on('fullscreenchange', () => {
+            const isFullscreen = player.isFullscreen();
+            if (isFullscreen) {
+                const fullscreenContainer = document.querySelector(".vjs-fullscreen");
+                fullscreenContainer.appendChild(watermark); 
+            } else {
+                videoContainer.appendChild(watermark); 
+            }
+            repositionWatermark(); 
+        });
     });
 </script>
-
 {% endblock %}

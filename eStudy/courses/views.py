@@ -221,3 +221,17 @@ def logout_view(request):
 def dashboard(request):
     enrolled_courses = Course.objects.filter(enrollments__user=request.user)
     return render(request, 'home/dashboard.html', {'courses': enrolled_courses})
+
+
+
+
+
+@login_required
+def user_settings(request):
+    user = request.user  
+    context = {
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'email': user.email,
+    }
+    return render(request, 'courses/settings.html', context)

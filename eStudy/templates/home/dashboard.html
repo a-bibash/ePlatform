@@ -30,6 +30,7 @@
         
 
         <!-- [ Course Section ] start -->
+        {% if courses %}
         <div class="col-md-12">
             <h2 class="mb-4">Your Courses</h2>
             <div class="row">
@@ -56,6 +57,9 @@
                 {% endfor %}
             </div>
         </div>
+        {% else  %}
+        <h2 class="mb-4 text-center" style="font-size: 22px;">You are not enrolled in any class please contact admin.</h2>
+        {% endif  %}
         <!-- [ Course Section ] end -->
     </div>
       <!-- [ Main Content ] end -->
