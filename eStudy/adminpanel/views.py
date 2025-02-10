@@ -10,7 +10,6 @@ from django.contrib.auth.decorators import login_required,  user_passes_test
 import pandas as pd
 from django.http import HttpResponse
 from django.utils.timezone import make_naive
-
 import boto3
 import requests
 import os
@@ -20,6 +19,8 @@ from botocore.config import Config
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import default_storage
+from django.db.models import Q
+
 
 
 User = get_user_model() 
@@ -28,11 +29,19 @@ def superuser_required(User):
     return User.is_superuser
 
 
-@login_required  
+
+
+@login_required
 @user_passes_test(superuser_required)
 def user_list(request):
-    users = User.objects.all()
-    return render(request, 'adminpanel/user_list.html', {'users': users})
+    query = request.GET.get('q') 
+    if query:
+        users = User.objects.filter(username__icontains=query)
+    else:
+        users = User.objects.all()
+
+    return render(request, 'adminpanel/user_list.html', {'users': users, 'query': query})
+
 
 
 @login_required 
@@ -89,20 +98,40 @@ def user_delete(request, pk):
     return redirect('user_list')
 
 
-@login_required  
+
+@login_required
 @user_passes_test(superuser_required)
 def model_list(request, app_label, model_name):
-   
+
     if app_label == 'auth' and model_name == 'user':
-        model = User  
+        model = User
     else:
         model = apps.get_model(app_label=app_label, model_name=model_name)
 
+    query = request.GET.get('q', '')
     objects = model.objects.all()
+
+    if query:
+        if model_name.lower() == 'course':
+
+            objects = objects.filter(
+                Q(title__icontains=query) | Q(description__icontains=query)
+            )
+        elif model_name.lower() == 'video':
+       
+            objects = objects.filter(Q(title__icontains=query))
+        elif model_name.lower() == 'enrollment':
+
+            objects = objects.filter(Q(user__username__icontains=query))
+        elif model_name.lower() == 'uservideoaccess':
+
+            objects = objects.filter(Q(user__username__icontains=query))
+
     return render(request, 'adminpanel/model_list.html', {
         'objects': objects,
         'model_name': model_name,
         'app_label': app_label,
+        'search_query': query,
     })
 
 

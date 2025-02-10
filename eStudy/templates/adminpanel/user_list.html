@@ -1,34 +1,123 @@
-{% extends 'layouts/ad_base.html' %}
+{% extends 'layouts/ad_base.html' %}  
+{% load static %}  
 
-{% load static %}
+{% block stylesheets %}  
+<link rel="stylesheet" href="{% static 'css/ad_css.css' %}">  
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">  
+<style>
+    /* Scoped Search Form Styles */
+    .custom-search-section .search-form {
+        background-color: transparent;
+        padding: 0.5rem;
+        border-radius: 8px;
+        max-width: 600px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+    }
 
-{% block stylesheets %}
-<link rel="stylesheet" href="{% static 'css/ad_css.css' %}">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-{% endblock %}
+    .custom-search-section .search-form input[type="text"] {
+        padding: 0.3rem 0.6rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        transition: border-color 0.3s ease;
+        width: 70%;
+    }
 
-{% block content %}
-<h1>User List</h1>
-<a href="{% url 'user_create' %}" class="btn btn-primary mb-3">Add User</a>
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for user in users %}
-        <tr>
-            <td>{{ user.username }}</td>
-            <td>{{ user.email }}</td>
-            <td>
-                <a href="{% url 'user_update' user.pk %}" class="btn btn-sm btn-warning">Edit</a>
-                <a href="{% url 'user_delete' user.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete user?')">Delete</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% endblock %}
+    .custom-search-section .search-form input[type="text"]:focus {
+        border-color: #28a745;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.25);
+    }
+
+    .custom-search-section .search-form button {
+        background-color: #28a745;
+        border: none;
+        color: #ffffff;
+        padding: 0.25rem 0.6rem;
+        font-size: 0.75rem;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.1s ease;
+        margin-left: 0.5rem;
+    }
+
+    .custom-search-section .search-form button:hover {
+        background-color: #218838;
+        transform: translateY(-1px);
+    }
+
+    .custom-search-section .search-form .btn-secondary {
+        background-color: #6c757d;
+        padding: 0.25rem 0.6rem;
+        font-size: 0.75rem;
+        border-radius: 4px;
+        border: none;
+        color: #ffffff;
+        margin-left: 0.5rem;
+    }
+
+    .custom-search-section .search-form .btn-secondary:hover {
+        background-color: #5a6268;
+        transform: translateY(-1px);
+    }
+</style>
+{% endblock %}  
+
+{% block content %}  
+
+<h1>User List</h1>  
+
+<div class="custom-search-section">
+    <!-- Search Form -->
+    <form method="GET" action="" class="search-form">
+        <input type="text" name="q" value="{{ request.GET.q }}" class="form-control" placeholder="Search users..." />
+        <button type="submit" class="btn btn-primary" name="search_btn">
+            <i class="fas fa-search"></i> Search
+        </button>
+        <a href="{% url 'user_list' %}" class="btn btn-secondary" name="clear_btn">
+            <i class="fas fa-times"></i> Clear
+        </a>
+    </form>
+</div>
+
+
+
+<a href="{% url 'user_create' %}" class="btn btn-success mb-3">  
+    <i class="fas fa-user-plus"></i> Add User  
+</a>  
+
+<table class="table table-bordered">  
+    <thead>  
+        <tr>  
+            <th>Username</th>  
+            <th>Email</th>  
+            <th>Actions</th>  
+        </tr>  
+    </thead>  
+    <tbody>  
+        {% if users %}  
+            {% for user in users %}  
+            <tr>  
+                <td>{{ user.username }}</td>  
+                <td>{{ user.email }}</td>  
+                <td>  
+                    <a href="{% url 'user_update' user.pk %}" class="btn btn-sm btn-warning">  
+                        <i class="fas fa-edit"></i> Edit  
+                    </a>  
+                    <a href="{% url 'user_delete' user.pk %}" class="btn btn-sm btn-danger"  
+                       onclick="return confirm('Are you sure you want to delete user?')">  
+                        <i class="fas fa-trash-alt"></i> Delete  
+                    </a>  
+                </td>  
+            </tr>  
+            {% endfor %}  
+        {% else %}  
+            <tr>  
+                <td colspan="3" class="text-center">No users found.</td>  
+            </tr>  
+        {% endif %}  
+    </tbody>  
+</table>  
+{% endblock %}  
