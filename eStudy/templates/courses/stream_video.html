@@ -40,7 +40,7 @@
                     </video>
                     <!-- Dynamic Watermark -->
                     <div class="watermark" id="watermark">
-                        {{ request.user.username }} | {{ request.user.email }}
+                        {{ request.user.username }} | {{ request.user.email }} | <br>{{ request.user.first_name }} | {{ request.user.last_name }}
                     </div>
                 </div>
                 <a href="{% url 'course_videos' video.course.id %}" class="btn btn-secondary mt-3">&larr; Back to Course</a>
@@ -70,7 +70,7 @@
     .watermark {
         position: absolute;
         color: rgba(255, 255, 255, 0.1); 
-        font-size: 8px;
+        font-size: 9px;
         pointer-events: none;
         z-index: 9999;
     }
