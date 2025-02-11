@@ -46,6 +46,7 @@ INSTALLED_APPS += [
     'courses',
     'rest_framework',
     'rest_framework_simplejwt',
+    'preventconcurrentlogins',
     ]
 
 MIDDLEWARE = [
@@ -57,6 +58,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+MIDDLEWARE += [
+    'preventconcurrentlogins.middleware.PreventConcurrentLoginsMiddleware',
+    ]
 
 ROOT_URLCONF = 'eStudy.urls'
 
