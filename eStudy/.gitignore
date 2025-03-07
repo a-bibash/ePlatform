@@ -17,6 +17,7 @@ __pycache__/
 
 # Static files (if they are generated during build or deployment)
 /static/
+/staticfiles/
 
 # Local settings (sensitive information)
 local_settings.py
